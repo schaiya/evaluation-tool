@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge"
 import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import ProgramElementsEditor from "@/components/program-elements-editor"
+import { ProgramExportButton } from "@/components/program-export-button"
 
 export default async function ProgramDetailPage({
   params,
@@ -45,8 +46,15 @@ export default async function ProgramDetailPage({
           <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
             ← Back to Programs
           </Link>
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">{program.name}</h1>
-          {program.description && <p className="text-slate-600">{program.description}</p>}
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-slate-900 mb-2">{program.name}</h1>
+              {program.description && <p className="text-slate-600">{program.description}</p>}
+            </div>
+            <div className="no-print">
+              <ProgramExportButton program={program} groupedElements={groupedElements} />
+            </div>
+          </div>
         </div>
 
         {/* Evaluation Modules card moved to the top */}

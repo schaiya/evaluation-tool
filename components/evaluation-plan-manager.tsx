@@ -41,6 +41,14 @@ export default function EvaluationPlanManager({ programId, indicators, existingP
   const [planItems, setPlanItems] = useState<PlanItem[]>(existingPlan?.plan_data || [])
   const [error, setError] = useState<string | null>(null)
 
+  const getMissingIndicators = () => {
+    const plannedIndicatorIds = new Set(planItems.map((item) => item.indicator_id))
+    return indicators.filter((ind) => !plannedIndicatorIds.has(ind.id))
+  }
+
+  const missingIndicators = getMissingIndicators()
+  const coveragePercentage = indicators.length > 0 ? Math.round((planItems.length / indicators.length) * 100) : 0
+
   const handleGeneratePlan = async () => {
     if (!startDate || !endDate) {
       setError("Please provide start and end dates")
@@ -65,6 +73,13 @@ export default function EvaluationPlanManager({ programId, indicators, existingP
       if (!response.ok) throw new Error("Failed to generate evaluation plan")
 
       const data = await response.json()
+
+      console.log("[v0] Generated plan items:", data.planItems.length, "for", indicators.length, "indicators")
+
+      if (data.planItems.length < indicators.length) {
+        console.warn("[v0] Not all indicators are in the plan. Missing:", indicators.length - data.planItems.length)
+      }
+
       setPlanItems(data.planItems)
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
@@ -171,6 +186,39 @@ export default function EvaluationPlanManager({ programId, indicators, existingP
           )}
 
           {error && <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">{error}</div>}
+
+          {planItems.length > 0 && missingIndicators.length > 0 && (
+            <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-xs font-bold mt-0.5">
+                  !
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-amber-900 mb-1">
+                    Incomplete Coverage: {missingIndicators.length} indicator{missingIndicators.length !== 1 ? "s" : ""}{" "}
+                    not in plan ({coveragePercentage}% coverage)
+                  </h4>
+                  <p className="text-sm text-amber-800 mb-2">
+                    The following indicators are missing from your evaluation plan:
+                  </p>
+                  <ul className="text-sm text-amber-800 space-y-1 ml-4 list-disc">
+                    {missingIndicators.map((ind) => (
+                      <li key={ind.id}>{ind.indicator_text}</li>
+                    ))}
+                  </ul>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 border-amber-300 bg-white hover:bg-amber-50"
+                    onClick={handleGeneratePlan}
+                    disabled={isGenerating}
+                  >
+                    Regenerate Plan to Include All Indicators
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

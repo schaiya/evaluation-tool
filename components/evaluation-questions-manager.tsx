@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Plus, Trash2, Sparkles, ArrowRight } from "lucide-react"
+import { exportToCSV, exportToMarkdown } from "@/lib/export-utils"
+import { ExportButton } from "@/components/export-button"
 
 interface Question {
   id: string
@@ -33,6 +35,7 @@ export default function EvaluationQuestionsManager({
   const [isAdding, setIsAdding] = useState(false)
   const [newQuestion, setNewQuestion] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const handleGenerateQuestions = async () => {
     setIsGenerating(true)
@@ -99,8 +102,49 @@ export default function EvaluationQuestionsManager({
     router.push(`/programs/${programId}/indicators`)
   }
 
+  const handleExportCSV = async () => {
+    console.log("[v0] handleExportCSV called, questions count:", questions.length)
+    const csvData = questions.map((q, index) => ({
+      Number: index + 1,
+      Question: q.question,
+      Type: q.is_custom ? "Custom" : "AI Generated",
+      Created: new Date(q.created_at).toLocaleDateString(),
+    }))
+    console.log("[v0] CSV data prepared:", csvData.length, "rows")
+    exportToCSV(csvData, ["Number", "Question", "Type", "Created"], "evaluation-questions")
+    console.log("[v0] exportToCSV function completed")
+  }
+
+  const handleExportMarkdown = async () => {
+    console.log("[v0] handleExportMarkdown called, questions count:", questions.length)
+    let markdown = `# Evaluation Questions\n\n`
+    markdown += `**Program ID:** ${programId}\n\n`
+    markdown += `**Total Questions:** ${questions.length}\n\n`
+    markdown += `---\n\n`
+
+    questions.forEach((q, index) => {
+      markdown += `## ${index + 1}. ${q.question}\n\n`
+      markdown += `- **Type:** ${q.is_custom ? "Custom" : "AI Generated"}\n`
+      markdown += `- **Created:** ${new Date(q.created_at).toLocaleDateString()}\n\n`
+    })
+
+    console.log("[v0] Markdown content prepared, length:", markdown.length)
+    exportToMarkdown(markdown, "evaluation-questions")
+    console.log("[v0] exportToMarkdown function completed")
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={contentRef}>
+      <div className="flex justify-end no-print">
+        <ExportButton
+          moduleName="Evaluation Questions"
+          programName={programId}
+          contentRef={contentRef}
+          onExportCSV={handleExportCSV}
+          onExportWord={handleExportMarkdown}
+        />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Module 3: Evaluation Question Development</CardTitle>
