@@ -10,31 +10,43 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     console.log("[v0] Identifying metrics for", indicators.length, "indicators")
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an expert in program evaluation and data collection. Identify appropriate metrics and data sources for indicators.",
-          },
-          {
-            role: "user",
-            content: `For each indicator below, identify:
+    const BATCH_SIZE = 15 // Process 15 indicators at a time
+    const allUpdatedIndicators: any[] = []
+
+    for (let i = 0; i < indicators.length; i += BATCH_SIZE) {
+      const batch = indicators.slice(i, i + BATCH_SIZE)
+      console.log(
+        `[v0] Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(indicators.length / BATCH_SIZE)} (${batch.length} indicators)`,
+      )
+
+      const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are an expert in program evaluation and data collection. Identify appropriate metrics and data sources for indicators.",
+            },
+            {
+              role: "user",
+              content: `For each indicator below, identify:
 1. An appropriate metric (how to measure it - e.g., percentage, count, rating scale, frequency)
 2. A realistic data source (where/how to collect the data - e.g., surveys, interviews, administrative records, observations)
 
 INDICATORS:
-${indicators.map((ind: any, idx: number) => `${idx + 1}. [ID: ${ind.id}] ${ind.indicator_text}`).join("\n")}
+${batch.map((ind: any, idx: number) => `${idx + 1}. [ID: ${ind.id}] ${ind.indicator_text}`).join("\n")}
 
-RELATED QUESTIONS:
-${questions.map((q: any, idx: number) => `${idx + 1}. ${q.question}`).join("\n")}
+RELATED QUESTIONS (for context):
+${questions
+  .slice(0, 5)
+  .map((q: any, idx: number) => `${idx + 1}. ${q.question}`)
+  .join("\n")}
 
 Return a JSON object with a "metrics" property containing an array of objects with this exact structure:
 {
@@ -48,91 +60,92 @@ Return a JSON object with a "metrics" property containing an array of objects wi
 }
 
 Be specific and practical. Consider both existing data sources and new data collection methods.`,
-          },
-        ],
-        response_format: { type: "json_object" },
-        max_tokens: 2000,
-        temperature: 0.7,
-      }),
-    })
+            },
+          ],
+          response_format: { type: "json_object" },
+          max_tokens: 3000, // Increased for batch processing
+          temperature: 0.7,
+        }),
+      })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error("[v0] OpenAI API error:", errorText)
-      throw new Error(`OpenAI API error: ${response.status} ${errorText}`)
-    }
-
-    const data = await response.json()
-    console.log("[v0] OpenAI response received")
-
-    const content = data.choices[0].message.content
-    console.log("[v0] Raw AI response:", content.substring(0, 500))
-
-    let parsedResponse
-    try {
-      parsedResponse = JSON.parse(content)
-      console.log("[v0] Full parsed response:", JSON.stringify(parsedResponse, null, 2))
-    } catch (parseError) {
-      console.error("[v0] Failed to parse AI response:", content)
-      throw new Error("Invalid JSON response from AI")
-    }
-
-    let metricsData: any[] = []
-
-    if (Array.isArray(parsedResponse)) {
-      metricsData = parsedResponse
-    } else if (parsedResponse.metrics && Array.isArray(parsedResponse.metrics)) {
-      metricsData = parsedResponse.metrics
-    } else if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
-      metricsData = parsedResponse.data
-    } else if (parsedResponse.results && Array.isArray(parsedResponse.results)) {
-      metricsData = parsedResponse.results
-    } else {
-      // Try to find any array property in the response
-      const arrayProp = Object.values(parsedResponse).find((val) => Array.isArray(val))
-      if (arrayProp) {
-        metricsData = arrayProp as any[]
-        console.log("[v0] Found array in unexpected property")
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("[v0] OpenAI API error:", errorText)
+        throw new Error(`OpenAI API error: ${response.status} ${errorText}`)
       }
-    }
 
-    console.log("[v0] Parsed metrics count:", metricsData.length)
+      const data = await response.json()
+      console.log(`[v0] OpenAI response received for batch ${Math.floor(i / BATCH_SIZE) + 1}`)
 
-    if (!metricsData || metricsData.length === 0) {
-      console.error("[v0] No metrics found in response. Response keys:", Object.keys(parsedResponse))
-      throw new Error("No metrics generated by AI")
-    }
+      const content = data.choices[0].message.content
+      console.log("[v0] Raw AI response (first 300 chars):", content.substring(0, 300))
 
-    const validIndicatorIds = new Set(indicators.map((ind: any) => ind.id))
-    const validMetrics = metricsData.filter((item: any) => {
-      if (!validIndicatorIds.has(item.id)) {
-        console.warn("[v0] Skipping metric with invalid indicator ID:", item.id)
-        return false
+      let parsedResponse
+      try {
+        parsedResponse = JSON.parse(content)
+      } catch (parseError) {
+        console.error("[v0] Failed to parse AI response:", content.substring(0, 500))
+        throw new Error(`Invalid JSON response from AI for batch ${Math.floor(i / BATCH_SIZE) + 1}`)
       }
-      return true
-    })
 
-    console.log("[v0] Valid metrics to update:", validMetrics.length)
+      let metricsData: any[] = []
 
-    // Update indicators with metrics and data sources
-    const updatePromises = validMetrics.map((item: any) =>
-      supabase
-        .from("indicators")
-        .update({
-          metric: item.metric,
-          data_source: item.data_source,
-        })
-        .eq("id", item.id)
-        .select()
-        .single(),
-    )
+      if (Array.isArray(parsedResponse)) {
+        metricsData = parsedResponse
+      } else if (parsedResponse.metrics && Array.isArray(parsedResponse.metrics)) {
+        metricsData = parsedResponse.metrics
+      } else if (parsedResponse.data && Array.isArray(parsedResponse.data)) {
+        metricsData = parsedResponse.data
+      } else if (parsedResponse.results && Array.isArray(parsedResponse.results)) {
+        metricsData = parsedResponse.results
+      } else {
+        const arrayProp = Object.values(parsedResponse).find((val) => Array.isArray(val))
+        if (arrayProp) {
+          metricsData = arrayProp as any[]
+        }
+      }
 
-    const results = await Promise.all(updatePromises)
-    const updatedIndicators = results.map((r) => r.data).filter(Boolean)
+      console.log("[v0] Parsed metrics count for this batch:", metricsData.length)
 
-    console.log("[v0] Successfully updated indicators:", updatedIndicators.length)
+      if (!metricsData || metricsData.length === 0) {
+        console.error("[v0] No metrics found in response. Response keys:", Object.keys(parsedResponse))
+        throw new Error(`No metrics generated by AI for batch ${Math.floor(i / BATCH_SIZE) + 1}`)
+      }
 
-    return NextResponse.json({ indicators: updatedIndicators })
+      const validIndicatorIds = new Set(batch.map((ind: any) => ind.id))
+      const validMetrics = metricsData.filter((item: any) => {
+        if (!validIndicatorIds.has(item.id)) {
+          console.warn("[v0] Skipping metric with invalid indicator ID:", item.id)
+          return false
+        }
+        return true
+      })
+
+      console.log("[v0] Valid metrics to update in this batch:", validMetrics.length)
+
+      // Update indicators with metrics and data sources
+      const updatePromises = validMetrics.map((item: any) =>
+        supabase
+          .from("indicators")
+          .update({
+            metric: item.metric,
+            data_source: item.data_source,
+          })
+          .eq("id", item.id)
+          .select()
+          .single(),
+      )
+
+      const results = await Promise.all(updatePromises)
+      const updatedBatch = results.map((r) => r.data).filter(Boolean)
+      allUpdatedIndicators.push(...updatedBatch)
+
+      console.log("[v0] Successfully updated indicators in batch:", updatedBatch.length)
+    }
+
+    console.log("[v0] Total indicators updated:", allUpdatedIndicators.length)
+
+    return NextResponse.json({ indicators: allUpdatedIndicators })
   } catch (error) {
     console.error("[v0] Error identifying metrics:", error)
     return NextResponse.json(

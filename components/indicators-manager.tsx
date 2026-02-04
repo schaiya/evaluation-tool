@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, Plus, Trash2, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { exportToCSV, exportToMarkdown } from "@/lib/export-utils"
+import { ExportButton } from "@/components/export-button"
 
 interface Question {
   id: string
@@ -47,6 +49,7 @@ export default function IndicatorsManager({
   const [newIndicator, setNewIndicator] = useState("")
   const [selectedQuestionId, setSelectedQuestionId] = useState<string>("")
   const [error, setError] = useState<string | null>(null)
+  const contentRef = useRef<HTMLDivElement>(null)
 
   const selectedIndicators = indicators.filter((i) => i.is_selected)
 
@@ -176,8 +179,56 @@ export default function IndicatorsManager({
     return question?.question
   }
 
+  const handleExportCSV = async () => {
+    const csvData = indicators.map((indicator) => ({
+      Indicator: indicator.indicator_text,
+      Question: getQuestionText(indicator.question_id) || "N/A",
+      Metric: indicator.metric || "Not defined",
+      DataSource: indicator.data_source || "Not defined",
+      Selected: indicator.is_selected ? "Yes" : "No",
+      Type: indicator.is_ai_generated ? "AI Generated" : "Custom",
+    }))
+    exportToCSV(csvData, ["Indicator", "Question", "Metric", "DataSource", "Selected", "Type"], "evaluation-indicators")
+  }
+
+  const handleExportMarkdown = async () => {
+    let markdown = `# Evaluation Indicators\n\n`
+    markdown += `**Program ID:** ${programId}\n\n`
+    markdown += `**Total Indicators:** ${indicators.length}\n`
+    markdown += `**Selected Indicators:** ${selectedIndicators.length}\n\n`
+    markdown += `---\n\n`
+
+    indicators.forEach((indicator, index) => {
+      markdown += `## ${index + 1}. ${indicator.indicator_text}\n\n`
+      const questionText = getQuestionText(indicator.question_id)
+      if (questionText) {
+        markdown += `**Related Question:** ${questionText}\n\n`
+      }
+      if (indicator.metric) {
+        markdown += `**Metric:** ${indicator.metric}\n\n`
+      }
+      if (indicator.data_source) {
+        markdown += `**Data Source:** ${indicator.data_source}\n\n`
+      }
+      markdown += `**Status:** ${indicator.is_selected ? "✓ Selected" : "Not selected"}\n\n`
+      markdown += `---\n\n`
+    })
+
+    exportToMarkdown(markdown, "evaluation-indicators")
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={contentRef}>
+      <div className="flex justify-end no-print">
+        <ExportButton
+          moduleName="Evaluation Indicators"
+          programName={programId}
+          contentRef={contentRef}
+          onExportCSV={handleExportCSV}
+          onExportWord={handleExportMarkdown}
+        />
+      </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Module 4: Evaluation Indicator Creator</CardTitle>
