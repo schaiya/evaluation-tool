@@ -14,8 +14,13 @@ import { ExportButton } from "@/components/export-button"
 interface Question {
   id: string
   question: string
-  is_custom: boolean // Changed from is_ai_generated to is_custom
+  is_custom: boolean
   created_at: string
+  source_type?: string
+  source_details?: { rationale?: string }
+  audience_tags?: string[]
+  approach_tags?: string[]
+  standard_tags?: string[]
 }
 
 interface EvaluationQuestionsManagerProps {
@@ -202,10 +207,32 @@ export default function EvaluationQuestionsManager({
                         <span className="font-semibold text-slate-700">{index + 1}.</span>
                         <p className="flex-1">{question.question}</p>
                       </div>
-                      {!question.is_custom && ( // Updated to show "Custom" badge for custom questions instead of "AI Generated"
-                        <Badge variant="secondary" className="text-xs">
-                          AI Generated
-                        </Badge>
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {!question.is_custom && (
+                          <Badge variant="secondary" className="text-xs">
+                            AI Generated
+                          </Badge>
+                        )}
+                        {question.audience_tags?.map(tag => (
+                          <Badge key={`aud-${tag}`} variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {question.approach_tags?.map(tag => (
+                          <Badge key={`app-${tag}`} variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                            {tag}
+                          </Badge>
+                        ))}
+                        {question.standard_tags?.map(tag => (
+                          <Badge key={`std-${tag}`} variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                      {question.source_details?.rationale && (
+                        <p className="text-xs text-muted-foreground mt-1 italic">
+                          {question.source_details.rationale}
+                        </p>
                       )}
                     </div>
                     <Button variant="ghost" size="sm" onClick={() => handleDeleteQuestion(question.id)}>
