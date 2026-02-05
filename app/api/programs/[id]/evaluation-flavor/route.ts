@@ -36,13 +36,14 @@ export async function POST(request: Request, { params }: RouteParams) {
   const body = await request.json()
 
   const {
-    is_active,
-    funder_name,
-    funder_guidelines_url,
-    custom_notes,
-    audiences,
-    approaches,
-    funder_requirements
+  is_active,
+  funder_name,
+  funder_guidelines_url,
+  custom_notes,
+  selected_standard_ids,
+  audiences,
+  approaches,
+  funder_requirements
   } = body
 
   // Check if flavor already exists
@@ -58,13 +59,14 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Update existing flavor
     const { error: updateError } = await supabase
       .from("evaluation_flavors")
-      .update({
-        is_active,
-        funder_name,
-        funder_guidelines_url,
-        custom_notes,
-        updated_at: new Date().toISOString()
-      })
+  .update({
+  is_active,
+  funder_name,
+  funder_guidelines_url,
+  custom_notes,
+  selected_standard_ids: selected_standard_ids || [],
+  updated_at: new Date().toISOString()
+  })
       .eq("id", existingFlavor.id)
 
     if (updateError) {
@@ -81,13 +83,14 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Create new flavor
     const { data: newFlavor, error: createError } = await supabase
       .from("evaluation_flavors")
-      .insert({
-        program_id: id,
-        is_active,
-        funder_name,
-        funder_guidelines_url,
-        custom_notes
-      })
+  .insert({
+  program_id: id,
+  is_active,
+  funder_name,
+  funder_guidelines_url,
+  custom_notes,
+  selected_standard_ids: selected_standard_ids || []
+  })
       .select()
       .single()
 
