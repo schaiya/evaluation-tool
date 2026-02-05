@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation"
 import LogicModelEditor from "@/components/logic-model-editor"
 import Link from "next/link"
 import { Loader2 } from "lucide-react"
+import ModuleNavigation from "@/components/module-navigation"
 
 interface ProgramElement {
   id: string
@@ -65,9 +66,7 @@ export default function LogicModelPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
-          <Link href={`/programs/${id}`} className="text-blue-600 hover:underline mb-4 inline-block">
-            ← Back to Program
-          </Link>
+          <ModuleNavigation programId={id} />
           <h1 className="text-4xl font-bold text-slate-900 mb-2">Logic Model</h1>
           <p className="text-slate-600">Create a visual diagram showing relationships between program elements</p>
         </div>
