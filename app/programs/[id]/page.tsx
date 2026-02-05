@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import ProgramElementsEditor from "@/components/program-elements-editor"
 import { ProgramExportButton } from "@/components/program-export-button"
+import ModuleNavigation from "@/components/module-navigation"
 
 export default async function ProgramDetailPage({
   params,
@@ -43,9 +44,12 @@ export default async function ProgramDetailPage({
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8">
-          <Link href="/" className="text-blue-600 hover:underline mb-4 inline-block">
-            ← Back to Programs
-          </Link>
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/" className="text-blue-600 hover:underline">
+              ← Back to Programs
+            </Link>
+            <ModuleNavigation programId={id} />
+          </div>
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-4xl font-bold text-slate-900 mb-2">{program.name}</h1>
@@ -89,11 +93,23 @@ export default async function ProgramDetailPage({
                 </div>
               </Link>
 
+              <Link href={`/programs/${id}/evaluation-flavor`} className="block">
+                <div className="p-4 border rounded-lg hover:bg-slate-50 transition-colors h-full">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-slate-900">3. Evaluation Flavor</h3>
+                      <p className="text-sm text-slate-600">Audiences, approaches & standards</p>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-slate-400" />
+                  </div>
+                </div>
+              </Link>
+
               <Link href={`/programs/${id}/evaluation-questions`} className="block">
                 <div className="p-4 border rounded-lg hover:bg-slate-50 transition-colors h-full">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-slate-900">3. Evaluation Questions</h3>
+                      <h3 className="font-semibold text-slate-900">4. Evaluation Questions</h3>
                       <p className="text-sm text-slate-600">Generate key questions</p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-slate-400" />
@@ -105,7 +121,7 @@ export default async function ProgramDetailPage({
                 <div className="p-4 border rounded-lg hover:bg-slate-50 transition-colors h-full">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-slate-900">4. Indicators</h3>
+                      <h3 className="font-semibold text-slate-900">5. Indicators</h3>
                       <p className="text-sm text-slate-600">Define metrics and data sources</p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-slate-400" />
@@ -117,7 +133,7 @@ export default async function ProgramDetailPage({
                 <div className="p-4 border rounded-lg hover:bg-slate-50 transition-colors h-full">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-slate-900">5. Evaluation Plan</h3>
+                      <h3 className="font-semibold text-slate-900">6. Evaluation Plan</h3>
                       <p className="text-sm text-slate-600">Timeline for data collection</p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-slate-400" />
@@ -129,7 +145,7 @@ export default async function ProgramDetailPage({
                 <div className="p-4 border rounded-lg hover:bg-slate-50 transition-colors h-full">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-slate-900">6. Data Collection Tools</h3>
+                      <h3 className="font-semibold text-slate-900">7. Data Collection Tools</h3>
                       <p className="text-sm text-slate-600">Surveys, interviews, focus groups</p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-slate-400" />
@@ -141,7 +157,7 @@ export default async function ProgramDetailPage({
                 <div className="p-4 border rounded-lg hover:bg-slate-50 transition-colors h-full">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-slate-900">7. Data Analysis & Report</h3>
+                      <h3 className="font-semibold text-slate-900">8. Data Analysis & Report</h3>
                       <p className="text-sm text-slate-600">Analyze data and generate report</p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-slate-400" />
