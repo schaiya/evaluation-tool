@@ -8,6 +8,8 @@ import { ChevronDown } from "lucide-react"
 
 const modules = [
   { name: "Program Overview", path: "" },
+  { name: "Logic Model", path: "/logic-model" },
+  { name: "Evaluation Flavor", path: "/evaluation-flavor" },
   { name: "Evaluation Questions", path: "/evaluation-questions" },
   { name: "Indicators", path: "/indicators" },
   { name: "Evaluation Plan", path: "/evaluation-plan" },
