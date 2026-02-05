@@ -80,6 +80,7 @@ interface Flavor {
   funder_name: string | null
   funder_guidelines_url: string | null
   custom_notes: string | null
+  selected_standard_ids: string[] | null
   flavor_audiences: Audience[]
   flavor_approaches: Approach[]
   funder_requirements: FunderRequirement[]
@@ -173,6 +174,9 @@ export function EvaluationFlavorManager({
   const [customNotes, setCustomNotes] = useState(initialFlavor?.custom_notes || '')
   const [funderRequirements, setFunderRequirements] = useState<FunderRequirement | null>(
     initialFlavor?.funder_requirements?.[0] || null
+  )
+  const [selectedStandards, setSelectedStandards] = useState<string[]>(
+    initialFlavor?.selected_standard_ids || []
   )
   
   const [saving, setSaving] = useState(false)
@@ -354,6 +358,7 @@ export function EvaluationFlavorManager({
           funder_name: funderName || null,
           funder_guidelines_url: funderUrl || null,
           custom_notes: customNotes || null,
+          selected_standard_ids: selectedStandards,
           audiences,
           approaches,
           funder_requirements: funderRequirements
@@ -817,22 +822,64 @@ export function EvaluationFlavorManager({
         </TabsContent>
 
         {/* Standards Tab */}
-        <TabsContent value="standards" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Evaluation Standards Reference</CardTitle>
-              <CardDescription>
-                Reference materials from major evaluation organizations. These standards inform best practices for your evaluation.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 md:grid-cols-2">
-                {standards.map(standard => (
-                  <Card key={standard.id} className="bg-muted/30">
-                    <CardHeader>
-                      <CardTitle className="text-base">{standard.content.name}</CardTitle>
-                      <CardDescription>{standard.category}</CardDescription>
-                    </CardHeader>
+<TabsContent value="standards" className="space-y-4">
+  <Card>
+  <CardHeader>
+  <CardTitle>Evaluation Standards</CardTitle>
+  <CardDescription>
+  Select which evaluation standards should guide your evaluation design. Selected standards will influence generated questions and methods.
+  </CardDescription>
+  </CardHeader>
+  <CardContent>
+  {/* Selected Standards Summary */}
+  {selectedStandards.length > 0 && (
+    <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+      <Label className="text-sm font-medium">Selected Standards ({selectedStandards.length})</Label>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {selectedStandards.map(id => {
+          const std = standards.find(s => s.id === id)
+          return std ? (
+            <Badge key={id} variant="default" className="flex items-center gap-1">
+              {std.standard_name}
+              <button
+                type="button"
+                onClick={() => setSelectedStandards(selectedStandards.filter(s => s !== id))}
+                className="ml-1 hover:text-destructive"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ) : null
+        })}
+      </div>
+    </div>
+  )}
+  <div className="grid gap-4 md:grid-cols-2">
+  {standards.map(standard => {
+    const isSelected = selectedStandards.includes(standard.id)
+    return (
+  <Card 
+    key={standard.id} 
+    className={`cursor-pointer transition-all ${isSelected ? 'ring-2 ring-primary bg-primary/5' : 'bg-muted/30 hover:bg-muted/50'}`}
+    onClick={() => {
+      if (isSelected) {
+        setSelectedStandards(selectedStandards.filter(id => id !== standard.id))
+      } else {
+        setSelectedStandards([...selectedStandards, standard.id])
+      }
+    }}
+  >
+  <CardHeader>
+  <div className="flex items-start justify-between">
+    <div>
+      <CardTitle className="text-base">{standard.content.name}</CardTitle>
+      <CardDescription>{standard.category}</CardDescription>
+    </div>
+    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${isSelected ? 'bg-primary border-primary' : 'border-muted-foreground/30'}`}>
+      {isSelected && <CheckCircle className="h-4 w-4 text-primary-foreground" />}
+    </div>
+  </div>
+  </CardHeader>
                     <CardContent className="space-y-2">
                       {standard.content.domains && (
                         <div>
@@ -886,13 +933,14 @@ export function EvaluationFlavorManager({
                           View Source
                         </a>
                       )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+  </CardContent>
+  </Card>
+  )
+  })}
+  </div>
+  </CardContent>
+  </Card>
+</TabsContent>
       </Tabs>
 
       {/* Save Button */}
