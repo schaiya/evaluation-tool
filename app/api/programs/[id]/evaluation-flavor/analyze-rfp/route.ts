@@ -1,12 +1,9 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import OpenAI from "openai"
 
 interface RouteParams {
   params: Promise<{ id: string }>
 }
-
-const openai = new OpenAI()
 
 export async function POST(request: Request, { params }: RouteParams) {
   const { id } = await params
@@ -35,12 +32,18 @@ export async function POST(request: Request, { params }: RouteParams) {
     const text = await file.text()
 
     // Use AI to extract evaluation requirements
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert at analyzing grant RFPs (Requests for Proposals) and extracting evaluation requirements. 
+    const openaiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert at analyzing grant RFPs (Requests for Proposals) and extracting evaluation requirements. 
           
 Extract the following from the provided RFP text:
 1. Evaluation requirements - specific evaluation activities, deliverables, or approaches required
@@ -52,18 +55,25 @@ Return your analysis as JSON with these exact keys:
 - evaluation_requirements: string[] (list of specific requirements)
 - reporting_templates: string[] (list of report format requirements)
 - timeline_expectations: string (summary of timeline/deadline requirements)
-- required_metrics: string[] (list of specific metrics or indicators required)`
-        },
-        {
-          role: "user",
-          content: `Please analyze this RFP and extract evaluation requirements:\n\n${text.substring(0, 15000)}`
-        }
-      ],
-      response_format: { type: "json_object" },
-      max_tokens: 2000
+- required_metrics: string[] (list of specific metrics or indicators required)`,
+          },
+          {
+            role: "user",
+            content: `Please analyze this RFP and extract evaluation requirements:\n\n${text.substring(0, 15000)}`,
+          },
+        ],
+        response_format: { type: "json_object" },
+        max_tokens: 2000,
+      }),
     })
 
-    const content = response.choices[0]?.message?.content
+    if (!openaiResponse.ok) {
+      const errorData = await openaiResponse.json()
+      throw new Error(`OpenAI API error: ${errorData.error?.message || openaiResponse.statusText}`)
+    }
+
+    const openaiData = await openaiResponse.json()
+    const content = openaiData.choices?.[0]?.message?.content
     if (!content) {
       return NextResponse.json({ error: "Failed to analyze RFP" }, { status: 500 })
     }
