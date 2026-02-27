@@ -35,7 +35,8 @@ export async function DELETE(
   try {
     const { id } = await params
     const supabase = await createClient()
-    const { critiqueId } = await request.json()
+    const { searchParams } = new URL(request.url)
+    const critiqueId = searchParams.get("critiqueId")
 
     const { error } = await supabase
       .from("evaluation_critiques")

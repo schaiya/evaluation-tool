@@ -47,16 +47,66 @@ interface Avatar {
   expertise_areas?: string[]
 }
 
+interface ExpandableItem {
+  summary: string
+  detail: string
+}
+
 interface SectionCritique {
   section_name: string
   stance: "agree" | "partial" | "disagree"
   commentary: string
-  strengths: string[]
-  concerns: string[]
+  strengths: (string | ExpandableItem)[]
+  concerns: (string | ExpandableItem)[]
   what_i_would_change: string[]
 }
 
 type CritiqueData = SectionCritique[]
+
+/** Normalize a strength/concern to always be an ExpandableItem */
+function normalizeItem(item: string | ExpandableItem): ExpandableItem {
+  if (typeof item === "string") return { summary: item, detail: "" }
+  return item
+}
+
+/** Clickable item that expands to show the avatar's deeper explanation */
+function ExpandablePoint({
+  item,
+  icon,
+  iconColor,
+}: {
+  item: string | ExpandableItem
+  icon: React.ReactNode
+  iconColor: string
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const normalized = normalizeItem(item)
+
+  return (
+    <li className="list-none">
+      <button
+        type="button"
+        onClick={() => normalized.detail && setIsOpen(!isOpen)}
+        className={`w-full text-left flex gap-2 leading-relaxed group ${normalized.detail ? "cursor-pointer" : "cursor-default"}`}
+      >
+        <span className={`${iconColor} mt-1 shrink-0`}>{icon}</span>
+        <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors flex-1">
+          {normalized.summary}
+          {normalized.detail && (
+            <ChevronDown className={`inline-block h-3.5 w-3.5 ml-1.5 text-muted-foreground/50 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          )}
+        </span>
+      </button>
+      {isOpen && normalized.detail && (
+        <div className="ml-6 mt-2 mb-1 p-3 bg-muted/30 rounded-lg border-l-2 border-muted-foreground/20">
+          <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+            {normalized.detail}
+          </p>
+        </div>
+      )}
+    </li>
+  )
+}
 
 interface Critique {
   id: string
@@ -338,13 +388,11 @@ export function CritiqueManager({
                               <div>
                                 <h5 className="font-semibold text-sm flex items-center gap-1.5 text-emerald-700 mb-2">
                                   <ThumbsUp className="h-3.5 w-3.5" /> Strengths
+                                  <span className="font-normal text-xs text-muted-foreground ml-1">(click to expand)</span>
                                 </h5>
                                 <ul className="space-y-2">
-                                  {section.strengths.map((s: string, i: number) => (
-                                    <li key={i} className="text-sm text-muted-foreground flex gap-2 leading-relaxed">
-                                      <span className="text-emerald-500 mt-1 shrink-0">+</span>
-                                      {s}
-                                    </li>
+                                  {section.strengths.map((s, i) => (
+                                    <ExpandablePoint key={i} item={s} icon="+" iconColor="text-emerald-500" />
                                   ))}
                                 </ul>
                               </div>
@@ -355,13 +403,11 @@ export function CritiqueManager({
                               <div>
                                 <h5 className="font-semibold text-sm flex items-center gap-1.5 text-amber-700 mb-2">
                                   <AlertCircle className="h-3.5 w-3.5" /> Concerns
+                                  <span className="font-normal text-xs text-muted-foreground ml-1">(click to expand)</span>
                                 </h5>
                                 <ul className="space-y-2">
-                                  {section.concerns.map((c: string, i: number) => (
-                                    <li key={i} className="text-sm text-muted-foreground flex gap-2 leading-relaxed">
-                                      <span className="text-amber-500 mt-1 shrink-0">!</span>
-                                      {c}
-                                    </li>
+                                  {section.concerns.map((c, i) => (
+                                    <ExpandablePoint key={i} item={c} icon="!" iconColor="text-amber-500" />
                                   ))}
                                 </ul>
                               </div>
