@@ -379,6 +379,7 @@ export function CritiqueManager({
                     )}
 
                     {/* Section-by-section critique */}
+                    {(() => { console.log("[v0] Critique data shape:", JSON.stringify(data?.[0]?.strengths?.[0]).substring(0, 200)); return null })()}
                     <Accordion type="multiple" defaultValue={Array.isArray(data) ? data.map((_, i) => `section-${i}`) : []}>
                       {(Array.isArray(data) ? data : []).map((section: SectionCritique, idx: number) => (
                         <AccordionItem key={idx} value={`section-${idx}`}>
@@ -399,30 +400,52 @@ export function CritiqueManager({
                             {/* Strengths */}
                             {section.strengths?.length > 0 && (
                               <div>
-                                <h5 className="font-semibold text-sm flex items-center gap-1.5 text-emerald-700 mb-2">
-                                  <ThumbsUp className="h-3.5 w-3.5" /> Strengths
-                                  <span className="font-normal text-xs text-muted-foreground ml-1">(click to expand)</span>
-                                </h5>
-                                <ul className="space-y-2">
-                                  {section.strengths.map((s, i) => (
-                                    <ExpandablePoint key={i} item={s} icon="+" iconColor="text-emerald-500" />
-                                  ))}
-                                </ul>
+                                {(() => {
+                                  const hasAnyDetail = section.strengths.some(
+                                    (s) => typeof s === "object" && s.detail
+                                  )
+                                  return (
+                                    <>
+                                      <h5 className="font-semibold text-sm flex items-center gap-1.5 text-emerald-700 mb-2">
+                                        <ThumbsUp className="h-3.5 w-3.5" /> Strengths
+                                        {hasAnyDetail && (
+                                          <span className="font-normal text-xs text-muted-foreground ml-1">(click items to see deeper analysis)</span>
+                                        )}
+                                      </h5>
+                                      <ul className="space-y-2">
+                                        {section.strengths.map((s, i) => (
+                                          <ExpandablePoint key={i} item={s} icon="+" iconColor="text-emerald-500" />
+                                        ))}
+                                      </ul>
+                                    </>
+                                  )
+                                })()}
                               </div>
                             )}
 
                             {/* Concerns */}
                             {section.concerns?.length > 0 && (
                               <div>
-                                <h5 className="font-semibold text-sm flex items-center gap-1.5 text-amber-700 mb-2">
-                                  <AlertCircle className="h-3.5 w-3.5" /> Concerns
-                                  <span className="font-normal text-xs text-muted-foreground ml-1">(click to expand)</span>
-                                </h5>
-                                <ul className="space-y-2">
-                                  {section.concerns.map((c, i) => (
-                                    <ExpandablePoint key={i} item={c} icon="!" iconColor="text-amber-500" />
-                                  ))}
-                                </ul>
+                                {(() => {
+                                  const hasAnyDetail = section.concerns.some(
+                                    (c) => typeof c === "object" && c.detail
+                                  )
+                                  return (
+                                    <>
+                                      <h5 className="font-semibold text-sm flex items-center gap-1.5 text-amber-700 mb-2">
+                                        <AlertCircle className="h-3.5 w-3.5" /> Concerns
+                                        {hasAnyDetail && (
+                                          <span className="font-normal text-xs text-muted-foreground ml-1">(click items to see deeper analysis)</span>
+                                        )}
+                                      </h5>
+                                      <ul className="space-y-2">
+                                        {section.concerns.map((c, i) => (
+                                          <ExpandablePoint key={i} item={c} icon="!" iconColor="text-amber-500" />
+                                        ))}
+                                      </ul>
+                                    </>
+                                  )
+                                })()}
                               </div>
                             )}
 
@@ -445,6 +468,47 @@ export function CritiqueManager({
                         </AccordionItem>
                       ))}
                     </Accordion>
+
+                    {/* Regenerate banner for old-format critiques */}
+                    {Array.isArray(data) && data.length > 0 && typeof data[0]?.strengths?.[0] === "string" && (
+                      <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <Sparkles className="h-4 w-4 text-blue-600 shrink-0" />
+                        <p className="text-sm text-blue-800 flex-1">
+                          This critique uses an older format. Regenerate it to get expandable strengths and concerns with deeper analysis.
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0"
+                          disabled={isGenerating}
+                          onClick={async () => {
+                            setIsGenerating(true)
+                            try {
+                              await handleDeleteCritique(critique.id)
+                              setSelectedAvatarId(critique.avatar_id)
+                              // Small delay then generate
+                              const res = await fetch(`/api/programs/${programId}/critiques/generate`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ avatar_id: critique.avatar_id }),
+                              })
+                              if (!res.ok) throw new Error("Failed to regenerate")
+                              const newCritique = await res.json()
+                              setCritiques((prev) => [newCritique, ...prev.filter((c) => c.id !== critique.id)])
+                              setExpandedCritique(newCritique.id)
+                              setSelectedAvatarId(null)
+                              toast({ title: "Critique regenerated", description: `${avatar?.name}'s critique has been updated with deeper analysis.` })
+                            } catch (error: any) {
+                              toast({ title: "Error", description: error.message, variant: "destructive" })
+                            } finally {
+                              setIsGenerating(false)
+                            }
+                          }}
+                        >
+                          {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Regenerate"}
+                        </Button>
+                      </div>
+                    )}
 
                     {/* Footer with date and delete */}
                     <div className="flex items-center justify-between pt-2 border-t">
