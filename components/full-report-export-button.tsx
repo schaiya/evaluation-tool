@@ -313,6 +313,106 @@ function buildIndicatorsSection(data: any): string {
   return html
 }
 
+const SECTION_LABELS: Record<string, string> = {
+  logic_model: "Logic Model",
+  evaluation_approach: "Evaluation Approach",
+  evaluation_questions: "Evaluation Questions",
+  indicators: "Indicators",
+  evaluation_plan: "Evaluation Plan",
+}
+
+function stanceColor(stance: string): { bg: string; text: string; label: string } {
+  if (stance === "agree") return { bg: "#d1fae5", text: "#065f46", label: "Agrees" }
+  if (stance === "disagree") return { bg: "#fecaca", text: "#7f1d1d", label: "Disagrees" }
+  return { bg: "#fef3c7", text: "#78350f", label: "Partially Agrees" }
+}
+
+function overallStanceLabel(stance: string): { bg: string; text: string; label: string } {
+  if (stance === "agree") return { bg: "#059669", text: "#fff", label: "Overall: Supports this design" }
+  if (stance === "disagree") return { bg: "#dc2626", text: "#fff", label: "Overall: Significant concerns" }
+  return { bg: "#d97706", text: "#fff", label: "Overall: Mixed assessment" }
+}
+
+function buildCritiquesSection(data: any): string {
+  const { critiques } = data
+  if (!critiques || critiques.length === 0) {
+    return `<div class="section page-break">
+      <h2>6. Design Critiques</h2>
+      <p class="empty">No design critiques have been generated yet.</p>
+    </div>`
+  }
+
+  let html = `<div class="section page-break">
+    <h2>6. Design Critiques</h2>
+    <p class="meta">${critiques.length} evaluation theorist(s) reviewed this design.</p>`
+
+  for (const critique of critiques) {
+    const avatar = critique.avatars
+    const cd = critique.critique_data
+    const os = overallStanceLabel(critique.overall_stance || "partial")
+
+    html += `<div class="critique-card">
+      <div class="critique-header">
+        <div>
+          <span class="critic-name">${avatar?.name || "Unknown"}</span>
+          <span class="critic-role">${avatar?.role || ""}</span>
+        </div>
+        <span class="stance-pill" style="background:${os.bg};color:${os.text};">${os.label}</span>
+      </div>`
+
+    // Overall assessment
+    if (critique.overall_assessment) {
+      html += `<div class="critique-quote">${critique.overall_assessment}</div>`
+    }
+
+    // Section stances
+    html += `<table class="critique-table">
+      <thead><tr><th>Section</th><th>Stance</th><th>Commentary</th></tr></thead>
+      <tbody>`
+    for (const [key, label] of Object.entries(SECTION_LABELS)) {
+      const section = cd?.[key]
+      if (!section) continue
+      const sc = stanceColor(section.stance)
+      html += `<tr>
+        <td style="font-weight:600;white-space:nowrap;">${label}</td>
+        <td><span class="stance-pill-sm" style="background:${sc.bg};color:${sc.text};">${sc.label}</span></td>
+        <td style="font-size:9.5pt;">${section.commentary}</td>
+      </tr>`
+    }
+    html += `</tbody></table>`
+
+    // Strengths / Concerns / Recommendations in columns
+    const hasMeta = (cd?.strengths?.length > 0) || (cd?.concerns?.length > 0) || (cd?.recommendations?.length > 0)
+    if (hasMeta) {
+      html += `<div class="critique-meta-grid">`
+      if (cd.strengths?.length > 0) {
+        html += `<div class="critique-meta-col">
+          <div class="critique-meta-title" style="color:#059669;">Strengths</div>
+          <ul>${cd.strengths.map((s: string) => `<li>${s}</li>`).join("")}</ul>
+        </div>`
+      }
+      if (cd.concerns?.length > 0) {
+        html += `<div class="critique-meta-col">
+          <div class="critique-meta-title" style="color:#d97706;">Concerns</div>
+          <ul>${cd.concerns.map((c: string) => `<li>${c}</li>`).join("")}</ul>
+        </div>`
+      }
+      if (cd.recommendations?.length > 0) {
+        html += `<div class="critique-meta-col">
+          <div class="critique-meta-title" style="color:#2563eb;">Recommendations</div>
+          <ul>${cd.recommendations.map((r: string) => `<li>${r}</li>`).join("")}</ul>
+        </div>`
+      }
+      html += `</div>`
+    }
+
+    html += `</div>` // close critique-card
+  }
+
+  html += `</div>`
+  return html
+}
+
 export function FullReportExportButton({ programId }: FullReportExportButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
 
@@ -369,6 +469,7 @@ export function FullReportExportButton({ programId }: FullReportExportButtonProp
       const flavorHtml = buildFlavorSection(data)
       const evalPlanHtml = buildEvalPlanSection(data)
       const indicatorsHtml = buildIndicatorsSection(data)
+      const critiquesHtml = buildCritiquesSection(data)
 
       const fullHtml = `<!DOCTYPE html>
 <html>
@@ -526,6 +627,63 @@ export function FullReportExportButton({ programId }: FullReportExportButtonProp
     text-indent: 0;
   }
 
+  /* Critiques */
+  .critique-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    page-break-inside: avoid;
+  }
+  .critique-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  .critic-name { font-weight: 700; font-size: 13pt; color: #1e293b; margin-right: 10px; }
+  .critic-role { font-size: 10pt; color: #64748b; }
+  .stance-pill {
+    padding: 3px 12px;
+    border-radius: 12px;
+    font-size: 9pt;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .stance-pill-sm {
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 8.5pt;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-block;
+  }
+  .critique-quote {
+    background: #f8fafc;
+    border-left: 3px solid #94a3b8;
+    padding: 10px 14px;
+    font-style: italic;
+    font-size: 10pt;
+    color: #334155;
+    margin-bottom: 12px;
+    border-radius: 0 4px 4px 0;
+    line-height: 1.6;
+  }
+  .critique-table { margin-bottom: 12px; }
+  .critique-meta-grid {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+  }
+  .critique-meta-col { flex: 1; }
+  .critique-meta-title {
+    font-weight: 700;
+    font-size: 10pt;
+    margin-bottom: 4px;
+  }
+  .critique-meta-col ul { margin: 0 0 0 16px; padding: 0; font-size: 9pt; }
+  .critique-meta-col li { margin: 2px 0; }
+
   ul { margin: 4px 0 8px 20px; padding: 0; }
   li { margin: 2px 0; }
 
@@ -546,6 +704,7 @@ export function FullReportExportButton({ programId }: FullReportExportButtonProp
   ${flavorHtml}
   ${evalPlanHtml}
   ${indicatorsHtml}
+  ${critiquesHtml}
   <script>
     window.onload = function() {
       setTimeout(function() { window.print(); window.close(); }, 400);
