@@ -135,16 +135,29 @@ ${avatar.key_influences ? `Key influences: ${JSON.stringify(avatar.key_influence
         messages: [
           {
             role: "system",
-            content: `You are a distinguished evaluation theorist providing a constructive critique of an evaluation design. You must write entirely in the voice and perspective of the person described below.
+            content: `You are ${avatar.name}, a distinguished evaluation theorist writing a thorough, in-depth peer review of an evaluation design. You must write ENTIRELY in your own voice, perspective, and intellectual tradition.
 
 ${styleInstructions}
 
-CRITICAL INSTRUCTIONS:
-- Write as this person. Adopt their vocabulary, sentence style, values lens, and intellectual perspective.
-- Be substantive and specific. Reference actual elements from the evaluation design.
-- Be balanced. Acknowledge genuine strengths before raising concerns.
-- Your critique should feel like a real peer review from this specific intellectual tradition.
-- Do NOT mention you are an AI. Write as though you are this person reviewing a colleague's work.
+VOICE AND STYLE REQUIREMENTS:
+- Fully inhabit this person's intellectual identity. Use their characteristic vocabulary, rhetorical patterns, and reasoning style.
+- Draw on their specific theoretical framework. If they champion participatory methods, critique through that lens. If they value rigor, assess methodological soundness. If they prioritize equity, examine whose voices are centered.
+- Use their common phrases and metaphors naturally throughout.
+- Reference specific concepts, theories, or publications associated with this thinker.
+- Each theorist should produce a DISTINCTLY different critique. A utilization-focused evaluator should sound nothing like a critical realist.
+- Do NOT be generic. Avoid bland statements like "this is well-designed." Instead say specifically WHY it works or fails from YOUR theoretical standpoint.
+
+DEPTH REQUIREMENTS:
+- "commentary" for each section must be a FULL PARAGRAPH (5-8 sentences minimum). This is the heart of the critique. Explain your reasoning deeply, reference the specific program elements by name, and connect your assessment to your theoretical framework.
+- "strengths" should have 2-4 items, each being a full sentence with specific reference to design elements.
+- "concerns" should have 2-4 items, each being a full sentence explaining WHY it is a concern from your perspective.
+- "recommendations" should have 2-3 items, each being a specific, actionable suggestion (not vague advice).
+- "overall_assessment" must be a FULL PARAGRAPH (5-8 sentences) that synthesizes your view, names specific tensions or opportunities, and reflects your values.
+
+INTELLECTUAL HONESTY:
+- Take clear stances. Do not hedge everything as "partial." If you genuinely disagree with an approach, say so and explain why.
+- Different theorists SHOULD disagree with each other. A positivist and a constructivist reviewing the same design should reach different conclusions.
+- Be collegial but candid. This is a scholarly peer review, not a rubber stamp.
 
 Return your critique as valid JSON with this exact structure:
 {
@@ -152,10 +165,10 @@ Return your critique as valid JSON with this exact structure:
     {
       "section_name": "Logic Model & Theory of Change",
       "stance": "agree" | "partial" | "disagree",
-      "strengths": ["specific strength 1", "specific strength 2"],
-      "concerns": ["specific concern 1"],
-      "recommendations": ["specific recommendation 1"],
-      "commentary": "A 2-3 sentence narrative in your voice explaining your overall take on this section."
+      "strengths": ["Full sentence referencing specific elements...", "Another specific strength..."],
+      "concerns": ["Full sentence explaining why this concerns you from your perspective..."],
+      "recommendations": ["Specific actionable recommendation..."],
+      "commentary": "A full paragraph (5-8 sentences) in your voice providing deep analysis of the logic model. Reference specific program elements by name. Explain how this aligns or conflicts with your theoretical framework."
     },
     {
       "section_name": "Evaluation Approach & Methodology",
@@ -163,7 +176,7 @@ Return your critique as valid JSON with this exact structure:
       "strengths": [],
       "concerns": [],
       "recommendations": [],
-      "commentary": ""
+      "commentary": "A full paragraph..."
     },
     {
       "section_name": "Evaluation Questions",
@@ -171,7 +184,7 @@ Return your critique as valid JSON with this exact structure:
       "strengths": [],
       "concerns": [],
       "recommendations": [],
-      "commentary": ""
+      "commentary": "A full paragraph..."
     },
     {
       "section_name": "Indicators & Measurement",
@@ -179,7 +192,7 @@ Return your critique as valid JSON with this exact structure:
       "strengths": [],
       "concerns": [],
       "recommendations": [],
-      "commentary": ""
+      "commentary": "A full paragraph..."
     },
     {
       "section_name": "Evaluation Plan & Timeline",
@@ -187,10 +200,10 @@ Return your critique as valid JSON with this exact structure:
       "strengths": [],
       "concerns": [],
       "recommendations": [],
-      "commentary": ""
+      "commentary": "A full paragraph..."
     }
   ],
-  "overall_assessment": "A 3-4 sentence overall assessment in your voice summarizing your view of this evaluation design.",
+  "overall_assessment": "A full paragraph (5-8 sentences) synthesizing your overall view. Name specific tensions, opportunities, and how this design serves or fails the program's stakeholders from your theoretical vantage point.",
   "overall_stance": "agree" | "partial" | "disagree"
 }`
           },
@@ -200,8 +213,8 @@ Return your critique as valid JSON with this exact structure:
           },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.8,
-        max_tokens: 4000,
+        temperature: 0.9,
+        max_tokens: 8000,
       }),
     })
 
@@ -217,7 +230,18 @@ Return your critique as valid JSON with this exact structure:
     try {
       critiqueData = JSON.parse(content)
     } catch {
-      throw new Error("Failed to parse critique response from AI")
+      // Try to salvage truncated JSON
+      try {
+        const lastBrace = content.lastIndexOf('},')
+        if (lastBrace > 0) {
+          const salvaged = content.substring(0, lastBrace + 1) + '], "overall_assessment": "Assessment truncated due to length.", "overall_stance": "partial"}'
+          critiqueData = JSON.parse(salvaged)
+        } else {
+          throw new Error("Cannot salvage")
+        }
+      } catch {
+        throw new Error("Failed to parse critique response from AI")
+      }
     }
 
     // Upsert the critique (replace if same avatar already critiqued)
