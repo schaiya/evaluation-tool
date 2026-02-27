@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { Loader2, Calendar, Sparkles, ArrowRight } from "lucide-react"
+import { Loader2, Calendar, Sparkles, ArrowRight, Download } from "lucide-react"
+import { exportToWord } from "@/lib/export-utils"
 
 interface Indicator {
   id: string
@@ -107,6 +108,98 @@ export default function EvaluationPlanManager({ programId, indicators, existingP
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred")
     }
+  }
+
+  const buildPlanMarkdown = () => {
+    let md = `# Evaluation Plan\n\n`
+    md += `**Evaluation Period:** ${startDate ? new Date(startDate).toLocaleDateString() : "TBD"} - ${endDate ? new Date(endDate).toLocaleDateString() : "TBD"}\n`
+    md += `**Duration:** ${durationMonths} months\n`
+    md += `**Total Indicators:** ${planItems.length}\n\n`
+    md += `---\n\n`
+
+    const groups = groupByTimeline()
+    for (const [timeline, items] of Object.entries(groups)) {
+      md += `## ${timeline}\n\n`
+      items.forEach((item, i) => {
+        md += `### ${i + 1}. ${item.indicator_text}\n\n`
+        md += `- **Metric:** ${item.metric}\n`
+        md += `- **Data Source:** ${item.data_source}\n`
+        md += `- **Collection Method:** ${item.collection_method}\n`
+        md += `- **Frequency:** ${item.frequency}\n\n`
+      })
+      md += `---\n\n`
+    }
+    return md
+  }
+
+  const handleExportWord = () => {
+    const md = buildPlanMarkdown()
+    exportToWord(md, "evaluation-plan")
+  }
+
+  const handleExportPDF = () => {
+    const groups = groupByTimeline()
+
+    let tableRows = ""
+    for (const [timeline, items] of Object.entries(groups)) {
+      items.forEach((item, i) => {
+        tableRows += `<tr>
+          ${i === 0 ? `<td rowspan="${items.length}" style="font-weight:bold;background:#eff6ff;vertical-align:top;">${timeline}</td>` : ""}
+          <td>${item.indicator_text}</td>
+          <td>${item.metric}</td>
+          <td>${item.data_source}</td>
+          <td>${item.collection_method}</td>
+          <td>${item.frequency}</td>
+        </tr>`
+      })
+    }
+
+    const printWindow = window.open("", "_blank")
+    if (!printWindow) return
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<title>Evaluation Plan</title>
+<style>
+  @page { size: landscape; margin: 0.5in; }
+  body { font-family: Calibri, sans-serif; margin: 0; padding: 20px; }
+  h1 { font-size: 20px; color: #1a1a1a; border-bottom: 2px solid #2563eb; padding-bottom: 6px; }
+  .meta { color: #475569; font-size: 13px; margin-bottom: 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 11px; }
+  th { background: #1e40af; color: white; padding: 8px 10px; text-align: left; font-weight: 600; }
+  td { border: 1px solid #cbd5e1; padding: 6px 10px; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+</style>
+</head>
+<body>
+  <h1>Evaluation Plan</h1>
+  <div class="meta">
+    <b>Period:</b> ${startDate ? new Date(startDate).toLocaleDateString() : "TBD"} - ${endDate ? new Date(endDate).toLocaleDateString() : "TBD"} |
+    <b>Duration:</b> ${durationMonths} months |
+    <b>Indicators:</b> ${planItems.length}
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Timeline</th>
+        <th>Indicator</th>
+        <th>Metric</th>
+        <th>Data Source</th>
+        <th>Collection Method</th>
+        <th>Frequency</th>
+      </tr>
+    </thead>
+    <tbody>${tableRows}</tbody>
+  </table>
+  <script>
+    window.onload = function() {
+      setTimeout(function() { window.print(); window.close(); }, 300);
+    };
+  <\/script>
+</body>
+</html>`)
+    printWindow.document.close()
   }
 
   const handleContinue = () => {
@@ -241,6 +334,14 @@ export default function EvaluationPlanManager({ programId, indicators, existingP
                   <CardDescription>Data collection schedule organized by timeline</CardDescription>
                 </div>
                 <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                    <Download className="h-4 w-4 mr-1" />
+                    PDF
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={handleExportWord}>
+                    <Download className="h-4 w-4 mr-1" />
+                    Word
+                  </Button>
                   <Button variant="outline" onClick={handleGeneratePlan} disabled={isGenerating}>
                     {isGenerating ? (
                       <>
