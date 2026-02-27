@@ -18,6 +18,7 @@ export async function GET(
       questionsResult,
       indicatorsResult,
       evalPlanResult,
+      critiquesResult,
     ] = await Promise.all([
       supabase.from("programs").select("*").eq("id", id).single(),
       supabase.from("program_elements").select("*").eq("program_id", id).order("element_type"),
@@ -38,6 +39,11 @@ export async function GET(
       supabase.from("evaluation_questions").select("*").eq("program_id", id).order("created_at"),
       supabase.from("indicators").select("*").eq("program_id", id).order("created_at"),
       supabase.from("evaluation_plans").select("*").eq("program_id", id).maybeSingle(),
+      supabase
+        .from("evaluation_critiques")
+        .select(`*, avatars (id, name, role, background)`)
+        .eq("program_id", id)
+        .order("created_at", { ascending: false }),
     ])
 
     if (!programResult.data) {
@@ -63,6 +69,7 @@ export async function GET(
       questions: questionsResult.data || [],
       indicators: indicatorsResult.data || [],
       evalPlan: evalPlanResult.data,
+      critiques: critiquesResult.data || [],
     })
   } catch (error) {
     console.error("[v0] Error fetching full report data:", error)

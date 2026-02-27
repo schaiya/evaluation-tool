@@ -143,11 +143,23 @@ export default async function ProgramDetailPage({
                 </div>
               </Link>
 
+              <Link href={`/programs/${id}/design-critique`} className="block">
+                <div className="p-4 border rounded-lg hover:bg-slate-50 transition-colors h-full">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-slate-900">7. Design Critique</h3>
+                      <p className="text-sm text-slate-600">Theorist critiques of your design</p>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-slate-400" />
+                  </div>
+                </div>
+              </Link>
+
               <Link href={`/programs/${id}/data-collection-tools`} className="block">
                 <div className="p-4 border rounded-lg hover:bg-slate-50 transition-colors h-full">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-slate-900">7. Data Collection Tools</h3>
+                      <h3 className="font-semibold text-slate-900">8. Data Collection Tools</h3>
                       <p className="text-sm text-slate-600">Surveys, interviews, focus groups</p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-slate-400" />
@@ -159,7 +171,7 @@ export default async function ProgramDetailPage({
                 <div className="p-4 border rounded-lg hover:bg-slate-50 transition-colors h-full">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-slate-900">8. Data Analysis & Report</h3>
+                      <h3 className="font-semibold text-slate-900">9. Data Analysis & Report</h3>
                       <p className="text-sm text-slate-600">Analyze data and generate report</p>
                     </div>
                     <ArrowRight className="h-5 w-5 text-slate-400" />

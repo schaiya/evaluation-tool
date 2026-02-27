@@ -13,6 +13,7 @@ const modules = [
   { name: "Evaluation Questions", path: "/evaluation-questions" },
   { name: "Indicators", path: "/indicators" },
   { name: "Evaluation Plan", path: "/evaluation-plan" },
+  { name: "Design Critique", path: "/design-critique" },
   { name: "Data Collection Tools", path: "/data-collection-tools" },
   { name: "Data Analysis", path: "/data-analysis" },
 ]
