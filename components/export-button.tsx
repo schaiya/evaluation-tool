@@ -95,8 +95,8 @@ export function ExportButton({
       try {
         await onExportCSV()
         toast({
-          title: "CSV exported",
-          description: `${moduleName} has been exported as CSV`,
+          title: "Excel exported",
+          description: `${moduleName} has been exported as Excel`,
         })
       } catch (error) {
         console.log("[v0] CSV export error:", error)
@@ -138,7 +138,7 @@ export function ExportButton({
         {onExportCSV && (
           <DropdownMenuItem onClick={handleExportCSV}>
             <FileText className="h-4 w-4 mr-2" />
-            Export as CSV
+            Export as Excel
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

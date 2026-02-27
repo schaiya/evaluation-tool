@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Plus, Trash2, Sparkles, ArrowRight } from "lucide-react"
-import { exportToCSV, exportToMarkdown } from "@/lib/export-utils"
+import { exportToCSV, exportToMarkdown, exportToWord, exportToExcel } from "@/lib/export-utils"
 import { ExportButton } from "@/components/export-button"
 
 interface Question {
@@ -107,35 +107,25 @@ export default function EvaluationQuestionsManager({
     router.push(`/programs/${programId}/indicators`)
   }
 
-  const handleExportCSV = async () => {
-    console.log("[v0] handleExportCSV called, questions count:", questions.length)
-    const csvData = questions.map((q, index) => ({
-      Number: index + 1,
+  const handleExportExcel = async () => {
+    const data = questions.map((q, i) => ({
+      Number: i + 1,
       Question: q.question,
       Type: q.is_custom ? "Custom" : "AI Generated",
       Created: new Date(q.created_at).toLocaleDateString(),
     }))
-    console.log("[v0] CSV data prepared:", csvData.length, "rows")
-    exportToCSV(csvData, ["Number", "Question", "Type", "Created"], "evaluation-questions")
-    console.log("[v0] exportToCSV function completed")
+    exportToExcel(data, ["Number", "Question", "Type", "Created"], "evaluation-questions")
   }
 
-  const handleExportMarkdown = async () => {
-    console.log("[v0] handleExportMarkdown called, questions count:", questions.length)
+  const handleExportWord = async () => {
     let markdown = `# Evaluation Questions\n\n`
-    markdown += `**Program ID:** ${programId}\n\n`
-    markdown += `**Total Questions:** ${questions.length}\n\n`
     markdown += `---\n\n`
-
-    questions.forEach((q, index) => {
-      markdown += `## ${index + 1}. ${q.question}\n\n`
+    questions.forEach((q, i) => {
+      markdown += `### ${i + 1}. ${q.question}\n`
       markdown += `- **Type:** ${q.is_custom ? "Custom" : "AI Generated"}\n`
       markdown += `- **Created:** ${new Date(q.created_at).toLocaleDateString()}\n\n`
     })
-
-    console.log("[v0] Markdown content prepared, length:", markdown.length)
-    exportToMarkdown(markdown, "evaluation-questions")
-    console.log("[v0] exportToMarkdown function completed")
+    exportToWord(markdown, "evaluation-questions")
   }
 
   return (
@@ -145,8 +135,8 @@ export default function EvaluationQuestionsManager({
           moduleName="Evaluation Questions"
           programName={programId}
           contentRef={contentRef}
-          onExportCSV={handleExportCSV}
-          onExportWord={handleExportMarkdown}
+  onExportCSV={handleExportExcel}
+  onExportWord={handleExportWord}
         />
       </div>
 
