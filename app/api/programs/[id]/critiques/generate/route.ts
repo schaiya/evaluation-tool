@@ -7,7 +7,11 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const { avatarId } = await request.json()
+    const body = await request.json()
+    const avatarId = body.avatar_id || body.avatarId
+    if (!avatarId) {
+      return NextResponse.json({ error: "avatar_id is required" }, { status: 400 })
+    }
     const supabase = await createClient()
 
     const apiKey = process.env.OPENAI_API_KEY
