@@ -147,17 +147,25 @@ VOICE AND STYLE REQUIREMENTS:
 - Each theorist should produce a DISTINCTLY different critique. A utilization-focused evaluator should sound nothing like a critical realist.
 - Do NOT be generic. Avoid bland statements like "this is well-designed." Instead say specifically WHY it works or fails from YOUR theoretical standpoint.
 
+PRESCRIPTIVE DESIGN CHANGES:
+- This is the MOST IMPORTANT part. For each section, you MUST propose specific design changes as though you were redesigning it yourself.
+- Frame changes as "If I were designing this, I would..." or "What I would change is..." or "The way I would approach this differently is..."
+- Each design change must explain WHAT you would change, HOW you would change it, and WHY from your theoretical perspective.
+- Be concrete: name specific questions you would rewrite, indicators you would replace, methods you would substitute, timeline adjustments you would make.
+- Even for sections you agree with, propose at least one refinement that would better align the design with your theoretical tradition.
+
 DEPTH REQUIREMENTS:
-- "commentary" for each section must be a FULL PARAGRAPH (5-8 sentences minimum). This is the heart of the critique. Explain your reasoning deeply, reference the specific program elements by name, and connect your assessment to your theoretical framework.
-- "strengths" should have 2-4 items, each being a full sentence with specific reference to design elements.
-- "concerns" should have 2-4 items, each being a full sentence explaining WHY it is a concern from your perspective.
-- "recommendations" should have 2-3 items, each being a specific, actionable suggestion (not vague advice).
-- "overall_assessment" must be a FULL PARAGRAPH (5-8 sentences) that synthesizes your view, names specific tensions or opportunities, and reflects your values.
+- "commentary" for each section must be a FULL PARAGRAPH (6-10 sentences). This is the heart of the critique. Explain your reasoning deeply, reference the specific program elements by name, and connect your assessment to your theoretical framework. Engage with the design as a scholar would - citing why certain choices matter and what consequences they carry.
+- "strengths" should have 2-4 items, each being 2-3 sentences explaining not just WHAT is strong but WHY it matters from your perspective.
+- "concerns" should have 2-4 items, each being 2-3 sentences explaining the concern AND what could go wrong if left unaddressed.
+- "what_i_would_change" should have 2-4 items, each being 2-4 sentences structured as: what specific element you would change, what you would replace it with or how you would modify it, and the theoretical reasoning for why this change would improve the evaluation. These must be concrete and actionable.
+- "overall_assessment" must be 2-3 FULL PARAGRAPHS (10-15 sentences total) that synthesizes your view, names specific tensions, proposes your vision for how the evaluation should be reoriented if you were leading it, and reflects your intellectual tradition.
 
 INTELLECTUAL HONESTY:
 - Take clear stances. Do not hedge everything as "partial." If you genuinely disagree with an approach, say so and explain why.
 - Different theorists SHOULD disagree with each other. A positivist and a constructivist reviewing the same design should reach different conclusions.
 - Be collegial but candid. This is a scholarly peer review, not a rubber stamp.
+- When you disagree, propose your alternative vision, not just criticism.
 
 Return your critique as valid JSON with this exact structure:
 {
@@ -165,17 +173,17 @@ Return your critique as valid JSON with this exact structure:
     {
       "section_name": "Logic Model & Theory of Change",
       "stance": "agree" | "partial" | "disagree",
-      "strengths": ["Full sentence referencing specific elements...", "Another specific strength..."],
-      "concerns": ["Full sentence explaining why this concerns you from your perspective..."],
-      "recommendations": ["Specific actionable recommendation..."],
-      "commentary": "A full paragraph (5-8 sentences) in your voice providing deep analysis of the logic model. Reference specific program elements by name. Explain how this aligns or conflicts with your theoretical framework."
+      "strengths": ["2-3 sentence strength with specific reference to design elements and why it matters..."],
+      "concerns": ["2-3 sentence concern explaining the issue and what could go wrong..."],
+      "what_i_would_change": ["2-4 sentence prescriptive change: If I were designing this, I would [specific change] because [theoretical reasoning]. This would [expected improvement]."],
+      "commentary": "A full paragraph (6-10 sentences) providing deep analysis in your voice..."
     },
     {
       "section_name": "Evaluation Approach & Methodology",
       "stance": "agree" | "partial" | "disagree",
       "strengths": [],
       "concerns": [],
-      "recommendations": [],
+      "what_i_would_change": [],
       "commentary": "A full paragraph..."
     },
     {
@@ -183,7 +191,7 @@ Return your critique as valid JSON with this exact structure:
       "stance": "agree" | "partial" | "disagree",
       "strengths": [],
       "concerns": [],
-      "recommendations": [],
+      "what_i_would_change": [],
       "commentary": "A full paragraph..."
     },
     {
@@ -191,7 +199,7 @@ Return your critique as valid JSON with this exact structure:
       "stance": "agree" | "partial" | "disagree",
       "strengths": [],
       "concerns": [],
-      "recommendations": [],
+      "what_i_would_change": [],
       "commentary": "A full paragraph..."
     },
     {
@@ -199,11 +207,11 @@ Return your critique as valid JSON with this exact structure:
       "stance": "agree" | "partial" | "disagree",
       "strengths": [],
       "concerns": [],
-      "recommendations": [],
+      "what_i_would_change": [],
       "commentary": "A full paragraph..."
     }
   ],
-  "overall_assessment": "A full paragraph (5-8 sentences) synthesizing your overall view. Name specific tensions, opportunities, and how this design serves or fails the program's stakeholders from your theoretical vantage point.",
+  "overall_assessment": "2-3 full paragraphs (10-15 sentences total) synthesizing your overall view, naming specific tensions, proposing how you would reorient the evaluation if you were leading it, and reflecting your intellectual tradition.",
   "overall_stance": "agree" | "partial" | "disagree"
 }`
           },

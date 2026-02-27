@@ -365,43 +365,31 @@ function buildCritiquesSection(data: any): string {
       html += `<div class="critique-quote">${critique.overall_assessment}</div>`
     }
 
-    // Section stances
-    html += `<table class="critique-table">
-      <thead><tr><th>Section</th><th>Stance</th><th>Commentary</th></tr></thead>
-      <tbody>`
-    for (const [key, label] of Object.entries(SECTION_LABELS)) {
-      const section = cd?.[key]
-      if (!section) continue
+    // Section-by-section critiques (now an array of section objects)
+    const sections = Array.isArray(cd) ? cd : []
+    for (const section of sections) {
       const sc = stanceColor(section.stance)
-      html += `<tr>
-        <td style="font-weight:600;white-space:nowrap;">${label}</td>
-        <td><span class="stance-pill-sm" style="background:${sc.bg};color:${sc.text};">${sc.label}</span></td>
-        <td style="font-size:9.5pt;">${section.commentary}</td>
-      </tr>`
-    }
-    html += `</tbody></table>`
+      html += `<div class="critique-section">
+        <div class="critique-section-header">
+          <span style="font-weight:700;">${section.section_name}</span>
+          <span class="stance-pill-sm" style="background:${sc.bg};color:${sc.text};">${sc.label}</span>
+        </div>
+        <p style="font-size:10pt;line-height:1.6;color:#334155;margin:8px 0;">${section.commentary}</p>`
 
-    // Strengths / Concerns / Recommendations in columns
-    const hasMeta = (cd?.strengths?.length > 0) || (cd?.concerns?.length > 0) || (cd?.recommendations?.length > 0)
-    if (hasMeta) {
-      html += `<div class="critique-meta-grid">`
-      if (cd.strengths?.length > 0) {
-        html += `<div class="critique-meta-col">
-          <div class="critique-meta-title" style="color:#059669;">Strengths</div>
-          <ul>${cd.strengths.map((s: string) => `<li>${s}</li>`).join("")}</ul>
-        </div>`
+      // Strengths
+      if (section.strengths?.length > 0) {
+        html += `<div class="critique-meta-title" style="color:#059669;margin-top:8px;">Strengths</div>
+          <ul class="critique-meta-col">${section.strengths.map((s: string) => `<li>${s}</li>`).join("")}</ul>`
       }
-      if (cd.concerns?.length > 0) {
-        html += `<div class="critique-meta-col">
-          <div class="critique-meta-title" style="color:#d97706;">Concerns</div>
-          <ul>${cd.concerns.map((c: string) => `<li>${c}</li>`).join("")}</ul>
-        </div>`
+      // Concerns
+      if (section.concerns?.length > 0) {
+        html += `<div class="critique-meta-title" style="color:#d97706;margin-top:8px;">Concerns</div>
+          <ul class="critique-meta-col">${section.concerns.map((c: string) => `<li>${c}</li>`).join("")}</ul>`
       }
-      if (cd.recommendations?.length > 0) {
-        html += `<div class="critique-meta-col">
-          <div class="critique-meta-title" style="color:#2563eb;">Recommendations</div>
-          <ul>${cd.recommendations.map((r: string) => `<li>${r}</li>`).join("")}</ul>
-        </div>`
+      // What I Would Change
+      if (section.what_i_would_change?.length > 0) {
+        html += `<div class="critique-meta-title" style="color:#2563eb;margin-top:8px;">What I Would Change</div>
+          <ul class="critique-meta-col" style="border-left:3px solid #93c5fd;padding-left:12px;">${section.what_i_would_change.map((r: string) => `<li style="margin:6px 0;">${r}</li>`).join("")}</ul>`
       }
       html += `</div>`
     }
@@ -668,6 +656,20 @@ export function FullReportExportButton({ programId }: FullReportExportButtonProp
     margin-bottom: 12px;
     border-radius: 0 4px 4px 0;
     line-height: 1.6;
+  }
+  .critique-section {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    page-break-inside: avoid;
+  }
+  .critique-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    font-size: 11pt;
   }
   .critique-table { margin-bottom: 12px; }
   .critique-meta-grid {
