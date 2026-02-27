@@ -81,24 +81,37 @@ function ExpandablePoint({
 }) {
   const [isOpen, setIsOpen] = useState(false)
   const normalized = normalizeItem(item)
+  const hasDetail = Boolean(normalized.detail)
 
   return (
     <li className="list-none">
-      <button
-        type="button"
-        onClick={() => normalized.detail && setIsOpen(!isOpen)}
-        className={`w-full text-left flex gap-2 leading-relaxed group ${normalized.detail ? "cursor-pointer" : "cursor-default"}`}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
+          if (hasDetail) setIsOpen((prev) => !prev)
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.stopPropagation()
+            e.preventDefault()
+            if (hasDetail) setIsOpen((prev) => !prev)
+          }
+        }}
+        className={`w-full text-left flex gap-2 leading-relaxed group rounded-md p-2 -m-1 ${hasDetail ? "cursor-pointer hover:bg-muted/50" : "cursor-default"}`}
       >
-        <span className={`${iconColor} mt-1 shrink-0`}>{icon}</span>
+        <span className={`${iconColor} mt-0.5 shrink-0 font-bold`}>{icon}</span>
         <span className="text-sm text-muted-foreground group-hover:text-foreground transition-colors flex-1">
           {normalized.summary}
-          {normalized.detail && (
-            <ChevronDown className={`inline-block h-3.5 w-3.5 ml-1.5 text-muted-foreground/50 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+          {hasDetail && (
+            <ChevronDown className={`inline-block h-3.5 w-3.5 ml-1.5 text-muted-foreground/50 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
           )}
         </span>
-      </button>
-      {isOpen && normalized.detail && (
-        <div className="ml-6 mt-2 mb-1 p-3 bg-muted/30 rounded-lg border-l-2 border-muted-foreground/20">
+      </div>
+      {isOpen && hasDetail && (
+        <div className="ml-6 mt-1 mb-2 p-3 bg-muted/30 rounded-lg border-l-2 border-muted-foreground/20 animate-in fade-in-0 slide-in-from-top-1 duration-200">
           <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
             {normalized.detail}
           </p>
