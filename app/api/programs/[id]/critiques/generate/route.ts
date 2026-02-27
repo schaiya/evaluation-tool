@@ -156,8 +156,12 @@ PRESCRIPTIVE DESIGN CHANGES:
 
 DEPTH REQUIREMENTS:
 - "commentary" for each section must be a FULL PARAGRAPH (6-10 sentences). This is the heart of the critique. Explain your reasoning deeply, reference the specific program elements by name, and connect your assessment to your theoretical framework. Engage with the design as a scholar would - citing why certain choices matter and what consequences they carry.
-- "strengths" should have 2-4 items, each being 2-3 sentences explaining not just WHAT is strong but WHY it matters from your perspective.
-- "concerns" should have 2-4 items, each being 2-3 sentences explaining the concern AND what could go wrong if left unaddressed.
+- "strengths" should have 2-4 items. Each strength is an OBJECT with:
+  - "summary": A single clear sentence identifying the strength (this is what users see first).
+  - "detail": A full paragraph (4-6 sentences) in your voice unpacking WHY this matters, connecting it to your theoretical perspective, referencing specific design elements, explaining what this strength enables for the evaluation, and noting what makes it particularly effective from your tradition. Write this as though you are explaining your position to a colleague over coffee.
+- "concerns" should have 2-4 items. Each concern is an OBJECT with:
+  - "summary": A single clear sentence identifying the concern (this is what users see first).
+  - "detail": A full paragraph (4-6 sentences) in your voice explaining the deeper issue, what could go wrong if unaddressed, how this conflicts with your theoretical values, what stakeholders might be affected, and what the consequences could be for the evaluation's credibility or utility. Be candid and specific.
 - "what_i_would_change" should have 2-4 items, each being 2-4 sentences structured as: what specific element you would change, what you would replace it with or how you would modify it, and the theoretical reasoning for why this change would improve the evaluation. These must be concrete and actionable.
 - "overall_assessment" must be 2-3 FULL PARAGRAPHS (10-15 sentences total) that synthesizes your view, names specific tensions, proposes your vision for how the evaluation should be reoriented if you were leading it, and reflects your intellectual tradition.
 
@@ -173,8 +177,8 @@ Return your critique as valid JSON with this exact structure:
     {
       "section_name": "Logic Model & Theory of Change",
       "stance": "agree" | "partial" | "disagree",
-      "strengths": ["2-3 sentence strength with specific reference to design elements and why it matters..."],
-      "concerns": ["2-3 sentence concern explaining the issue and what could go wrong..."],
+      "strengths": [{"summary": "One sentence identifying the strength.", "detail": "A full paragraph (4-6 sentences) in your voice explaining why this matters deeply..."}],
+      "concerns": [{"summary": "One sentence identifying the concern.", "detail": "A full paragraph (4-6 sentences) in your voice explaining the deeper issue..."}],
       "what_i_would_change": ["2-4 sentence prescriptive change: If I were designing this, I would [specific change] because [theoretical reasoning]. This would [expected improvement]."],
       "commentary": "A full paragraph (6-10 sentences) providing deep analysis in your voice..."
     },

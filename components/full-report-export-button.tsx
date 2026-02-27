@@ -379,12 +379,18 @@ function buildCritiquesSection(data: any): string {
       // Strengths
       if (section.strengths?.length > 0) {
         html += `<div class="critique-meta-title" style="color:#059669;margin-top:8px;">Strengths</div>
-          <ul class="critique-meta-col">${section.strengths.map((s: string) => `<li>${s}</li>`).join("")}</ul>`
+          <ul class="critique-meta-col">${section.strengths.map((s: any) => {
+            if (typeof s === "string") return `<li>${s}</li>`
+            return `<li><strong>${s.summary}</strong>${s.detail ? `<br/><span style="font-size:9pt;color:#475569;line-height:1.6;display:block;margin:4px 0 6px;">${s.detail}</span>` : ""}</li>`
+          }).join("")}</ul>`
       }
       // Concerns
       if (section.concerns?.length > 0) {
         html += `<div class="critique-meta-title" style="color:#d97706;margin-top:8px;">Concerns</div>
-          <ul class="critique-meta-col">${section.concerns.map((c: string) => `<li>${c}</li>`).join("")}</ul>`
+          <ul class="critique-meta-col">${section.concerns.map((c: any) => {
+            if (typeof c === "string") return `<li>${c}</li>`
+            return `<li><strong>${c.summary}</strong>${c.detail ? `<br/><span style="font-size:9pt;color:#475569;line-height:1.6;display:block;margin:4px 0 6px;">${c.detail}</span>` : ""}</li>`
+          }).join("")}</ul>`
       }
       // What I Would Change
       if (section.what_i_would_change?.length > 0) {
