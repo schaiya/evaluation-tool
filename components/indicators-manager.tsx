@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Loader2, Plus, Trash2, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { exportToCSV, exportToMarkdown } from "@/lib/export-utils"
+import { exportToExcel, exportToWord } from "@/lib/export-utils"
 import { ExportButton } from "@/components/export-button"
 
 interface Question {
@@ -179,21 +179,20 @@ export default function IndicatorsManager({
     return question?.question
   }
 
-  const handleExportCSV = async () => {
-    const csvData = indicators.map((indicator) => ({
+  const handleExportExcel = async () => {
+    const data = indicators.map((indicator) => ({
       Indicator: indicator.indicator_text,
       Question: getQuestionText(indicator.question_id) || "N/A",
       Metric: indicator.metric || "Not defined",
-      DataSource: indicator.data_source || "Not defined",
+      "Data Source": indicator.data_source || "Not defined",
       Selected: indicator.is_selected ? "Yes" : "No",
       Type: indicator.is_ai_generated ? "AI Generated" : "Custom",
     }))
-    exportToCSV(csvData, ["Indicator", "Question", "Metric", "DataSource", "Selected", "Type"], "evaluation-indicators")
+    exportToExcel(data, ["Indicator", "Question", "Metric", "Data Source", "Selected", "Type"], "evaluation-indicators")
   }
 
-  const handleExportMarkdown = async () => {
+  const handleExportWord = async () => {
     let markdown = `# Evaluation Indicators\n\n`
-    markdown += `**Program ID:** ${programId}\n\n`
     markdown += `**Total Indicators:** ${indicators.length}\n`
     markdown += `**Selected Indicators:** ${selectedIndicators.length}\n\n`
     markdown += `---\n\n`
@@ -210,11 +209,11 @@ export default function IndicatorsManager({
       if (indicator.data_source) {
         markdown += `**Data Source:** ${indicator.data_source}\n\n`
       }
-      markdown += `**Status:** ${indicator.is_selected ? "✓ Selected" : "Not selected"}\n\n`
+      markdown += `**Status:** ${indicator.is_selected ? "Selected" : "Not selected"}\n\n`
       markdown += `---\n\n`
     })
 
-    exportToMarkdown(markdown, "evaluation-indicators")
+    exportToWord(markdown, "evaluation-indicators")
   }
 
   return (
@@ -224,8 +223,8 @@ export default function IndicatorsManager({
           moduleName="Evaluation Indicators"
           programName={programId}
           contentRef={contentRef}
-          onExportCSV={handleExportCSV}
-          onExportWord={handleExportMarkdown}
+          onExportCSV={handleExportExcel}
+          onExportWord={handleExportWord}
         />
       </div>
 
