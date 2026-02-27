@@ -169,7 +169,16 @@ export default function EvaluationPlanManager({ programId, indicators, existingP
               <p className="text-slate-600 mb-4">
                 Ready to generate your evaluation plan with {indicators.length} selected indicators
               </p>
-              <Button onClick={handleGeneratePlan} disabled={isGenerating || !startDate || !endDate}>
+              {(!startDate || !endDate) && (
+                <p className="text-sm text-amber-600 mb-3">
+                  Please set start and end dates above before generating
+                </p>
+              )}
+              <Button 
+                onClick={handleGeneratePlan} 
+                disabled={isGenerating || !startDate || !endDate}
+                size="lg"
+              >
                 {isGenerating ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
