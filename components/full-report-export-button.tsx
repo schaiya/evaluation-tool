@@ -326,6 +326,36 @@ export function FullReportExportButton({ programId }: FullReportExportButtonProp
       const programName = data.program?.name || "Evaluation Report"
       const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
 
+      // Generate narrative from guiding avatar
+      let narrativeHtml = ""
+      try {
+        const narrativeRes = await fetch(`/api/programs/${programId}/full-report/narrative`, {
+          method: "POST",
+        })
+        if (narrativeRes.ok) {
+          const narrativeData = await narrativeRes.json()
+          if (narrativeData.narrative) {
+            const paragraphs = narrativeData.narrative
+              .split("\n\n")
+              .filter((p: string) => p.trim())
+              .map((p: string) => `<p>${p.trim()}</p>`)
+              .join("")
+
+            narrativeHtml = `<div class="section page-break">
+              <h2>Executive Narrative</h2>
+              <div class="narrative-meta">
+                Written from the perspective of <strong>${narrativeData.avatarName}</strong>, 
+                guiding avatar for the <em style="text-transform:capitalize;">${narrativeData.approachType}</em> evaluation approach
+              </div>
+              <div class="narrative-body">${paragraphs}</div>
+            </div>`
+          }
+        }
+      } catch (e) {
+        // Narrative is optional - continue without it
+        console.warn("[v0] Narrative generation failed, continuing without it")
+      }
+
       const coverHtml = `<div class="cover">
         <div class="cover-content">
           <h1>${programName}</h1>
@@ -471,6 +501,31 @@ export function FullReportExportButton({ programId }: FullReportExportButtonProp
     margin-top: 30px;
   }
 
+  /* Narrative */
+  .narrative-meta {
+    font-size: 10pt;
+    color: #475569;
+    font-style: italic;
+    margin-bottom: 16px;
+    padding: 10px 14px;
+    background: #f8fafc;
+    border-left: 3px solid #2563eb;
+    border-radius: 0 4px 4px 0;
+  }
+  .narrative-body {
+    font-size: 11.5pt;
+    line-height: 1.7;
+    color: #1e293b;
+    max-width: 680px;
+  }
+  .narrative-body p {
+    margin: 0 0 14px;
+    text-indent: 24px;
+  }
+  .narrative-body p:first-child {
+    text-indent: 0;
+  }
+
   ul { margin: 4px 0 8px 20px; padding: 0; }
   li { margin: 2px 0; }
 
@@ -485,6 +540,7 @@ export function FullReportExportButton({ programId }: FullReportExportButtonProp
 </head>
 <body>
   ${coverHtml}
+  ${narrativeHtml}
   ${overviewHtml}
   ${logicModelHtml}
   ${flavorHtml}
@@ -518,7 +574,7 @@ export function FullReportExportButton({ programId }: FullReportExportButtonProp
       {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Generating Report...
+          Generating Report & Narrative...
         </>
       ) : (
         <>
