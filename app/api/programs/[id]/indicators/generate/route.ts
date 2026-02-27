@@ -11,6 +11,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     console.log("[v0] Generating indicators with OpenAI...")
     console.log("[v0] Number of questions:", questions.length)
 
+    // Limit to first 8 questions to avoid token overflow
+    const limitedQuestions = questions.slice(0, 8)
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -23,14 +26,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           {
             role: "system",
             content:
-              "You are an expert in program evaluation and indicator development. Generate specific, measurable indicators for evaluation questions. Always return valid JSON.",
+              "You are an expert in program evaluation and indicator development. Generate specific, measurable indicators for evaluation questions. Always return valid JSON. Keep responses concise.",
           },
           {
             role: "user",
-            content: `Based on the following evaluation questions, generate 3-5 specific, measurable indicators for each question.
+            content: `Based on the following evaluation questions, generate exactly 2 specific, measurable indicators for each question.
 
 EVALUATION QUESTIONS:
-${questions.map((q: any, idx: number) => `${idx + 1}. [ID: ${q.id}] ${q.question}`).join("\n")}
+${limitedQuestions.map((q: any, idx: number) => `${idx + 1}. [ID: ${q.id}] ${q.question}`).join("\n")}
 
 LOGIC MODEL SUMMARY:
 ${logicModel?.nodes ? `- ${logicModel.nodes.length} program elements across inputs, activities, outputs, outcomes, and impacts` : "No logic model available"}
@@ -39,12 +42,11 @@ Generate indicators that are:
 1. Specific and measurable
 2. Directly related to the evaluation questions
 3. Feasible to collect
-4. Mix of quantitative and qualitative indicators
-5. Cover different aspects of the program
+4. Mix of quantitative and qualitative
 
 Return a JSON object with an "indicators" array. Each indicator must have:
 - question_id: Use the actual UUID from the questions above
-- indicator_text: The specific indicator description
+- indicator_text: The specific indicator description (keep under 120 characters)
 
 Format:
 {
@@ -54,11 +56,11 @@ Format:
   ]
 }
 
-Generate 3-5 indicators per question.`,
+IMPORTANT: Generate exactly 2 indicators per question. Keep indicator_text concise.`,
           },
         ],
         response_format: { type: "json_object" },
-        max_tokens: 3000,
+        max_tokens: 4000,
         temperature: 0.7,
       }),
     })
@@ -78,10 +80,24 @@ Generate 3-5 indicators per question.`,
     let parsedResponse
     try {
       parsedResponse = JSON.parse(content)
-      console.log("[v0] Full parsed response:", JSON.stringify(parsedResponse, null, 2))
     } catch (parseError) {
-      console.error("[v0] Failed to parse AI response:", content)
-      throw new Error("Invalid JSON response from AI")
+      // Response may have been truncated - try to salvage valid indicators
+      console.warn("[v0] JSON parse failed, attempting truncation recovery...")
+      try {
+        // Find the last complete indicator object by finding the last "},"
+        const lastComplete = content.lastIndexOf('},')
+        if (lastComplete > 0) {
+          const salvaged = content.substring(0, lastComplete + 1) + ']}'
+          parsedResponse = JSON.parse(salvaged)
+          console.log("[v0] Recovered truncated response with", parsedResponse?.indicators?.length || 0, "indicators")
+        } else {
+          console.error("[v0] Failed to parse AI response:", content.substring(0, 500))
+          throw new Error("Invalid JSON response from AI")
+        }
+      } catch (salvageError) {
+        console.error("[v0] Failed to salvage truncated response:", content.substring(0, 500))
+        throw new Error("Invalid JSON response from AI")
+      }
     }
 
     let generatedIndicators = []
