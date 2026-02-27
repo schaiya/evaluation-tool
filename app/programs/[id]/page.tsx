@@ -6,6 +6,7 @@ import Link from "next/link"
 import { ArrowRight } from "lucide-react"
 import ProgramElementsEditor from "@/components/program-elements-editor"
 import { ProgramExportButton } from "@/components/program-export-button"
+import { FullReportExportButton } from "@/components/full-report-export-button"
 import ModuleNavigation from "@/components/module-navigation"
 
 export default async function ProgramDetailPage({
@@ -55,7 +56,8 @@ export default async function ProgramDetailPage({
               <h1 className="text-4xl font-bold text-slate-900 mb-2">{program.name}</h1>
               {program.description && <p className="text-slate-600">{program.description}</p>}
             </div>
-            <div className="no-print">
+            <div className="no-print flex items-center gap-3">
+              <FullReportExportButton programId={id} />
               <ProgramExportButton program={program} groupedElements={groupedElements} />
             </div>
           </div>
