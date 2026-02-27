@@ -48,20 +48,15 @@ interface Avatar {
 }
 
 interface SectionCritique {
+  section_name: string
   stance: "agree" | "partial" | "disagree"
   commentary: string
-}
-
-interface CritiqueData {
-  logic_model: SectionCritique
-  evaluation_approach: SectionCritique
-  evaluation_questions: SectionCritique
-  indicators: SectionCritique
-  evaluation_plan: SectionCritique
   strengths: string[]
   concerns: string[]
-  recommendations: string[]
+  what_i_would_change: string[]
 }
+
+type CritiqueData = SectionCritique[]
 
 interface Critique {
   id: string
@@ -296,12 +291,11 @@ export function CritiqueManager({
                       <div className="flex items-center gap-2">
                         {/* Section stance summary as small dots */}
                         <div className="flex gap-1">
-                          {Object.entries(SECTION_LABELS).map(([key]) => {
-                            const section = data?.[key as keyof CritiqueData] as SectionCritique | undefined
-                            const color = section?.stance === "agree" ? "bg-emerald-500"
-                              : section?.stance === "disagree" ? "bg-red-500"
+                          {(Array.isArray(data) ? data : []).map((section: SectionCritique, idx: number) => {
+                            const color = section.stance === "agree" ? "bg-emerald-500"
+                              : section.stance === "disagree" ? "bg-red-500"
                               : "bg-amber-500"
-                            return <span key={key} className={`w-2.5 h-2.5 rounded-full ${color}`} title={`${SECTION_LABELS[key]}: ${section?.stance}`} />
+                            return <span key={idx} className={`w-2.5 h-2.5 rounded-full ${color}`} title={`${section.section_name}: ${section.stance}`} />
                           })}
                         </div>
                         {isExpanded ? <ChevronDown className="h-5 w-5 text-muted-foreground" /> : <ChevronRight className="h-5 w-5 text-muted-foreground" />}
@@ -322,72 +316,76 @@ export function CritiqueManager({
                     )}
 
                     {/* Section-by-section critique */}
-                    <div className="space-y-4">
-                      {Object.entries(SECTION_LABELS).map(([key, label]) => {
-                        const section = data?.[key as keyof CritiqueData] as SectionCritique | undefined
-                        if (!section) return null
-                        return (
-                          <div key={key} className="border rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-2">
-                              <h4 className="font-semibold text-sm text-foreground">{label}</h4>
+                    <Accordion type="multiple" defaultValue={Array.isArray(data) ? data.map((_, i) => `section-${i}`) : []}>
+                      {(Array.isArray(data) ? data : []).map((section: SectionCritique, idx: number) => (
+                        <AccordionItem key={idx} value={`section-${idx}`}>
+                          <AccordionTrigger className="hover:no-underline">
+                            <div className="flex items-center gap-3">
+                              <span className="font-semibold text-sm">{section.section_name}</span>
                               <StanceBadge stance={section.stance} />
                             </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">
-                              {section.commentary}
-                            </p>
-                          </div>
-                        )
-                      })}
-                    </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="space-y-4 pt-2">
+                            {/* Commentary */}
+                            <div className="p-3 bg-muted/30 rounded-lg">
+                              <p className="text-sm text-foreground leading-relaxed whitespace-pre-line">
+                                {section.commentary}
+                              </p>
+                            </div>
 
-                    {/* Strengths / Concerns / Recommendations */}
-                    <div className="grid gap-4 md:grid-cols-3">
-                      {data?.strengths?.length > 0 && (
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-sm flex items-center gap-1.5 text-emerald-700">
-                            <ThumbsUp className="h-4 w-4" /> Strengths
-                          </h4>
-                          <ul className="space-y-1">
-                            {data.strengths.map((s: string, i: number) => (
-                              <li key={i} className="text-xs text-muted-foreground flex gap-2">
-                                <span className="text-emerald-500 mt-0.5 shrink-0">+</span>
-                                {s}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {data?.concerns?.length > 0 && (
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-sm flex items-center gap-1.5 text-amber-700">
-                            <AlertCircle className="h-4 w-4" /> Concerns
-                          </h4>
-                          <ul className="space-y-1">
-                            {data.concerns.map((c: string, i: number) => (
-                              <li key={i} className="text-xs text-muted-foreground flex gap-2">
-                                <span className="text-amber-500 mt-0.5 shrink-0">!</span>
-                                {c}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {data?.recommendations?.length > 0 && (
-                        <div className="space-y-2">
-                          <h4 className="font-semibold text-sm flex items-center gap-1.5 text-blue-700">
-                            <Lightbulb className="h-4 w-4" /> Recommendations
-                          </h4>
-                          <ul className="space-y-1">
-                            {data.recommendations.map((r: string, i: number) => (
-                              <li key={i} className="text-xs text-muted-foreground flex gap-2">
-                                <span className="text-blue-500 mt-0.5 shrink-0">*</span>
-                                {r}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
+                            {/* Strengths */}
+                            {section.strengths?.length > 0 && (
+                              <div>
+                                <h5 className="font-semibold text-sm flex items-center gap-1.5 text-emerald-700 mb-2">
+                                  <ThumbsUp className="h-3.5 w-3.5" /> Strengths
+                                </h5>
+                                <ul className="space-y-2">
+                                  {section.strengths.map((s: string, i: number) => (
+                                    <li key={i} className="text-sm text-muted-foreground flex gap-2 leading-relaxed">
+                                      <span className="text-emerald-500 mt-1 shrink-0">+</span>
+                                      {s}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* Concerns */}
+                            {section.concerns?.length > 0 && (
+                              <div>
+                                <h5 className="font-semibold text-sm flex items-center gap-1.5 text-amber-700 mb-2">
+                                  <AlertCircle className="h-3.5 w-3.5" /> Concerns
+                                </h5>
+                                <ul className="space-y-2">
+                                  {section.concerns.map((c: string, i: number) => (
+                                    <li key={i} className="text-sm text-muted-foreground flex gap-2 leading-relaxed">
+                                      <span className="text-amber-500 mt-1 shrink-0">!</span>
+                                      {c}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {/* What I Would Change */}
+                            {section.what_i_would_change?.length > 0 && (
+                              <div className="border-l-3 border-blue-400 pl-4">
+                                <h5 className="font-semibold text-sm flex items-center gap-1.5 text-blue-700 mb-2">
+                                  <Lightbulb className="h-3.5 w-3.5" /> What I Would Change
+                                </h5>
+                                <ul className="space-y-3">
+                                  {section.what_i_would_change.map((r: string, i: number) => (
+                                    <li key={i} className="text-sm text-foreground leading-relaxed">
+                                      {r}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
 
                     {/* Footer with date and delete */}
                     <div className="flex items-center justify-between pt-2 border-t">
