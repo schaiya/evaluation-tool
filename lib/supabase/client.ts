@@ -1,4 +1,4 @@
-import { createClient as createSupabaseClient } from "@supabase/supabase-js"
+import { createBrowserClient } from "@supabase/ssr"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 let client: SupabaseClient | undefined
@@ -8,12 +8,8 @@ export function createClient() {
     return client
   }
 
-  client = createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
-    auth: {
-      storageKey: "sb-auth-token",
-      flowType: "pkce",
-    },
-  })
+  // Cookie-based auth so server + client stay in sync (important for OAuth on Vercel).
+  client = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
   return client
 }
