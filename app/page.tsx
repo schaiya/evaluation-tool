@@ -1,9 +1,11 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ProgramCard } from "@/components/program-card"
 import { CreateProgramDialog } from "@/components/create-program-dialog"
+import { createClient } from "@/lib/supabase/client"
 
 interface Program {
   id: string
@@ -15,6 +17,17 @@ interface Program {
 export default function HomePage() {
   const [programs, setPrograms] = useState<Program[]>([])
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    supabase.auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.replace("/login")
+      }
+    })
+  }, [router])
 
   const fetchPrograms = async () => {
     try {

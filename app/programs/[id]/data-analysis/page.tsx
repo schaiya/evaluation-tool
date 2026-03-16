@@ -11,6 +11,14 @@ export default async function DataAnalysisPage({
   const { id } = await params
   const supabase = await createClient()
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect("/login")
+  }
+
   // Fetch program
   const { data: program } = await supabase.from("programs").select("*").eq("id", id).single()
 
