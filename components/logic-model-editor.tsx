@@ -17,7 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Loader2, Plus, Save, ArrowRight, Trash2 } from "lucide-react"
+import { Loader2, Plus, Save, ArrowRight, Trash2, Download } from "lucide-react"
 
 interface ProgramElement {
   id: string
@@ -209,6 +209,86 @@ export default function LogicModelEditor({ programId, elements, existingModel }:
     setEdges((prev) => prev.filter((edge) => edge.id !== edgeId))
   }
 
+  const handleExportPDF = () => {
+    if (!svgRef.current) return
+
+    // Clone the SVG so we can modify it for export without affecting the UI
+    const svgClone = svgRef.current.cloneNode(true) as SVGSVGElement
+
+    // Compute bounding box of all nodes to crop whitespace
+    let minX = Infinity, minY = Infinity, maxX = 0, maxY = 0
+    nodes.forEach(node => {
+      minX = Math.min(minX, node.x)
+      minY = Math.min(minY, node.y)
+      maxX = Math.max(maxX, node.x + 200) // node width
+      maxY = Math.max(maxY, node.y + 80)  // node height
+    })
+    const padding = 40
+    const cropW = maxX - minX + padding * 2
+    const cropH = maxY - minY + padding * 2
+    svgClone.setAttribute("viewBox", `${minX - padding} ${minY - padding} ${cropW} ${cropH}`)
+    svgClone.setAttribute("width", String(cropW))
+    svgClone.setAttribute("height", String(cropH))
+
+    // Inline the foreignObject text styles so they render in the print window
+    const fos = svgClone.querySelectorAll("foreignObject div")
+    fos.forEach(div => {
+      ;(div as HTMLElement).style.fontFamily = "sans-serif"
+      ;(div as HTMLElement).style.fontSize = "11px"
+      ;(div as HTMLElement).style.fontWeight = "500"
+      ;(div as HTMLElement).style.color = "#0f172a"
+      ;(div as HTMLElement).style.display = "flex"
+      ;(div as HTMLElement).style.alignItems = "center"
+      ;(div as HTMLElement).style.justifyContent = "center"
+      ;(div as HTMLElement).style.height = "100%"
+      ;(div as HTMLElement).style.textAlign = "center"
+      ;(div as HTMLElement).style.padding = "8px"
+    })
+
+    const svgData = new XMLSerializer().serializeToString(svgClone)
+
+    // Build a legend from the element types present
+    const typesPresent = [...new Set(nodes.map(n => n.elementType))]
+    const legendHtml = typesPresent.map(type => {
+      const color = elementTypeColors[type as keyof typeof elementTypeColors] || "#eee"
+      const label = elementTypeLabels[type as keyof typeof elementTypeLabels] || type
+      return `<span style="display:inline-flex;align-items:center;gap:6px;margin-right:16px;">
+        <span style="width:16px;height:16px;border-radius:4px;background:${color};border:1px solid #94a3b8;display:inline-block;"></span>
+        <span>${label}</span>
+      </span>`
+    }).join("")
+
+    const printWindow = window.open("", "_blank")
+    if (!printWindow) return
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Logic Model</title>
+        <style>
+          @page { size: landscape; margin: 0.5in; }
+          body { font-family: Calibri, sans-serif; margin: 0; padding: 20px; }
+          h1 { font-size: 20px; color: #1a1a1a; margin-bottom: 4px; }
+          .legend { margin: 12px 0 16px; font-size: 12px; color: #475569; }
+          svg { max-width: 100%; height: auto; }
+        </style>
+      </head>
+      <body>
+        <h1>Program Logic Model</h1>
+        <div class="legend">${legendHtml}</div>
+        ${svgData}
+        <script>
+          window.onload = function() {
+            setTimeout(function() { window.print(); window.close(); }, 300);
+          };
+        <\/script>
+      </body>
+      </html>
+    `)
+    printWindow.document.close()
+  }
+
   const handleContinue = () => {
     router.push(`/programs/${programId}/evaluation-questions`)
   }
@@ -280,6 +360,10 @@ export default function LogicModelEditor({ programId, elements, existingModel }:
                   Save
                 </>
               )}
+            </Button>
+            <Button size="sm" variant="outline" onClick={handleExportPDF}>
+              <Download className="h-4 w-4 mr-2" />
+              Export PDF
             </Button>
             {connectingFrom && (
               <Button size="sm" variant="outline" onClick={() => setConnectingFrom(null)}>

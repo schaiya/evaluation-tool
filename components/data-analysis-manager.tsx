@@ -69,6 +69,10 @@ function FindingVisualization({ visualization }: { visualization: any }) {
 
   const { type, title, description, data, xAxisKey, yAxisKey } = visualization
 
+  if (data.length === 0) {
+    return null
+  }
+
   const COLORS = [
     "hsl(var(--chart-1))",
     "hsl(var(--chart-2))",
@@ -140,12 +144,12 @@ function FindingVisualization({ visualization }: { visualization: any }) {
               cx="50%"
               cy="50%"
               outerRadius={80}
-              label
             >
               {data.map((entry, index) => (
                 <RechartsPrimitive.Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </RechartsPrimitive.Pie>
+            <RechartsPrimitive.Legend />
           </RechartsPrimitive.PieChart>
         )}
       </ChartContainer>

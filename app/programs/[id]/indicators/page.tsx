@@ -44,8 +44,8 @@ export default async function IndicatorsPage({
       <div className="container mx-auto px-4 py-8 max-w-6xl">
         <div className="mb-8">
           <ModuleNavigation programId={id} />
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Evaluation Indicators</h1>
-          <p className="text-slate-600">Create indicators to measure your evaluation questions</p>
+          <h1 className="text-4xl font-bold text-foreground mb-2">Evaluation Indicators</h1>
+          <p className="text-muted-foreground">Create indicators to measure your evaluation questions</p>
         </div>
 
         <IndicatorsManager
